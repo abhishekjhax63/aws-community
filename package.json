@@ -1,0 +1,36 @@
+{
+  "name": "aws-builder-community-amity-patna",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:full": "concurrently \"vite\" \"tsx watch server/index.ts\"",
+    "server": "tsx watch server/index.ts",
+    "build": "tsc -b && tsc -p tsconfig.server.json && vite build",
+    "preview": "vite preview",
+    "start": "node dist-server/server/index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
+    "lucide-react": "^0.468.0",
+    "multer": "^2.0.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/express": "^5.0.0",
+    "@types/multer": "^2.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "typescript": "~5.6.2",
+    "tsx": "^4.19.2",
+    "vite": "^6.0.1"
+  }
+}
