@@ -28,6 +28,28 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // While the mobile menu is open: lock background scrolling, close on Escape,
+  // and release everything if the viewport grows back to the desktop layout.
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    const desktop = window.matchMedia("(min-width: 900px)");
+    const closeOnResize = () => {
+      if (desktop.matches) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    desktop.addEventListener("change", closeOnResize);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+      desktop.removeEventListener("change", closeOnResize);
+    };
+  }, [open]);
+
   const isAdmin = role === "admin" || role === "editor";
 
   return (

@@ -56,7 +56,7 @@ button { color: inherit; }
 
 .site-header {
   height: 76px;
-  padding: 0 clamp(20px, 5.2vw, 84px);
+  padding: 0 max(clamp(20px, 5.2vw, 84px), env(safe-area-inset-right)) 0 max(clamp(20px, 5.2vw, 84px), env(safe-area-inset-left));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -77,7 +77,7 @@ button { color: inherit; }
 .main-nav > a { font-size: 12px; color: #51565b; transition: color .2s ease; }
 .main-nav > a:hover { color: #111; }
 .main-nav .nav-join { color: #171b21; display: inline-flex; align-items: center; gap: 12px; border-bottom: 1px solid #171b21; padding: 11px 0 8px; font-weight: 600; }
-.menu-toggle { display: none; border: 1px solid var(--line); background: transparent; width: 42px; height: 42px; align-items: center; justify-content: center; }
+.menu-toggle { display: none; border: 1px solid var(--line); background: transparent; width: 44px; height: 44px; align-items: center; justify-content: center; flex: none; }
 
 .hero { min-height: 650px; height: min(750px, calc(100svh - 76px)); position: relative; overflow: hidden; padding: 26px clamp(20px, 8.3vw, 134px) 38px; background: var(--navy); color: #f5f2ea; }
 .hero::before { content: ""; position: absolute; inset: 0; pointer-events: none; display: none; }
@@ -979,15 +979,10 @@ button { color: inherit; }
 }
 @media (max-width: 680px) {
   html { scroll-padding-top: 66px; }
-  .site-header { height: 66px; padding: 0 19px; }
+  .site-header { height: 66px; padding: 0 max(19px, env(safe-area-inset-right)) 0 max(19px, env(safe-area-inset-left)); }
   .brand-mark { width: 35px; height: 35px; }
   .brand-copy strong { font-size: 10px; }
   .brand-copy > span { font-size: 8px; }
-  .menu-toggle { display: flex; }
-  .main-nav { position: absolute; display: none; top: 65px; left: 0; right: 0; padding: 13px 20px 21px; background: var(--paper); border-bottom: 1px solid #deded8; box-shadow: 0 12px 18px rgba(20,25,29,.07); }
-  .main-nav.is-open { display: flex; flex-direction: column; align-items: stretch; gap: 0; }
-  .main-nav > a { padding: 14px 2px; border-bottom: 1px solid #e3e3de; font-size: 13px; }
-  .main-nav .nav-join { justify-content: space-between; border-bottom: 0; margin-top: 5px; }
   .hero { height: auto; min-height: 0; padding: 22px 22px 62px; }
   .hero-topline { font-size: 8px; }
   .hero-content { height: auto; display: flex; flex-direction: column; align-items: stretch; }
@@ -1215,9 +1210,6 @@ button { color: inherit; }
   .profile-identity { gap: 14px; }
   .profile-avatar { width: 60px; height: 60px; }
   .profile-card { padding: 20px 18px; }
-  .main-nav .nav-actions { flex-direction: column; align-items: stretch; gap: 0; margin-top: 4px; }
-  .main-nav .nav-auth-link { padding: 14px 2px; border-bottom: 1px solid #e3e3de; font-size: 13px; }
-  .main-nav .nav-actions .nav-join { justify-content: space-between; border-bottom: 0; margin-top: 5px; }
   .admin-header { min-height: 0; padding: 11px 16px; flex-wrap: wrap; gap: 10px; }
   .admin-tabs { padding: 0 16px; }
   .admin-body { padding: 20px 16px 40px; }
@@ -2899,6 +2891,176 @@ button { color: inherit; }
     font-size: 10px;
     letter-spacing: 0.18em;
     line-height: 1.6;
+  }
+}
+
+/* ============================================================
+   TOUCH & INPUT POLISH
+   Comfortable tap targets, no iOS focus-zoom, and safe-area
+   aware spacing on phones. Applies across every page.
+   ============================================================ */
+/* A 13px default checkbox is hard to hit on any device. */
+.consent-label input {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+}
+/* The show/hide password control needs a real touch area, not just the glyph. */
+.auth-password > button {
+  width: 44px;
+  height: 44px;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+}
+
+@media (max-width: 680px) {
+  /* iOS Safari zooms the viewport in when a focused field renders below 16px;
+     sizing the controls at 16px keeps the layout steady while typing. */
+  .auth-form input:not([type="checkbox"]),
+  .profile-fields input,
+  .members-search input,
+  .suggestion-field input,
+  .suggestion-field select,
+  .suggestion-field textarea,
+  .admin-login-card > input,
+  .admin-setting-form input,
+  .admin-setting-form textarea,
+  .registration-form input,
+  .registration-form select,
+  .registration-form textarea,
+  .event-category-select select {
+    font-size: 16px;
+  }
+  /* The one-time-code fields live inside .auth-form — keep them large. */
+  .auth-form .otp-row input {
+    font-size: 18px;
+  }
+}
+
+/* Tablet and phone touch ergonomics — comfortable targets everywhere below
+   the desktop navigation breakpoint, without the iOS-specific field sizing
+   above (iPad Safari does not force-zoom on focus). */
+@media (max-width: 899px) {
+  /* Comfortable 44px tap area for the header logo without moving the mark. */
+  .brand {
+    min-height: 44px;
+  }
+  /* Touch-friendly controls. */
+  .gallery-filters button {
+    min-height: 40px;
+  }
+  .members-search {
+    min-height: 48px;
+  }
+  .members-search input {
+    align-self: stretch;
+  }
+  /* Underline-style fields sit at ~38px; give them a real tap height. */
+  .suggestion-field input,
+  .suggestion-field select,
+  .event-category-select select {
+    min-height: 44px;
+  }
+  .ed-bar--hero .photo-btn,
+  .ed-bar--hero .photo-btn-toggle {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Footer navigation turns into a comfortable tap list instead of 12px-tall
+     text rows that are hard to hit on a phone. */
+  .footer-column {
+    gap: 2px;
+  }
+  .footer-column a {
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+  }
+  .footer-column-auth a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+  }
+  .footer-socials a,
+  .footer-socials > span {
+    width: 40px;
+    height: 40px;
+  }
+  .footer-bottom a {
+    min-height: 40px;
+  }
+
+  /* Keep the footer clear of the home indicator / gesture bar. */
+  .site-footer {
+    padding-bottom: max(17px, env(safe-area-inset-bottom));
+  }
+
+/* ============================================================
+   NAVIGATION — phones and tablets share one collapsible menu.
+   Seven text links plus the CTA need roughly 900px of header
+   width; narrower viewports (681–899 previously spilled past
+   the right edge) now get the hamburger. Single source of truth
+   for every panel rule, so nothing is duplicated across query
+   blocks. `top: 100%` anchors the panel to the header whatever
+   its height (66px on phones, 76px on tablets).
+   ============================================================ */
+  .menu-toggle { display: flex; }
+  /* The panel may be taller than a short/landscape viewport, so it scrolls
+     on its own instead of pushing the last links out of reach. */
+  .main-nav {
+    position: absolute;
+    display: none;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: calc(100svh - 76px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 13px max(20px, env(safe-area-inset-right)) max(21px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+    background: var(--paper);
+    border-bottom: 1px solid #deded8;
+    box-shadow: 0 12px 18px rgba(20, 25, 29, .07);
+  }
+  .main-nav.is-open {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+  .main-nav > a {
+    padding: 14px 2px;
+    border-bottom: 1px solid #e3e3de;
+    font-size: 13px;
+  }
+  .main-nav .nav-join {
+    justify-content: space-between;
+    min-height: 44px;
+    border-bottom: 0;
+    margin-top: 5px;
+  }
+  .main-nav .nav-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    margin-top: 4px;
+  }
+  .main-nav .nav-auth-link {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 14px 2px;
+    border-bottom: 1px solid #e3e3de;
+    font-size: 13px;
+  }
+  .main-nav .nav-actions .nav-join {
+    min-height: 44px;
+    justify-content: space-between;
+    border-bottom: 0;
+    margin-top: 5px;
   }
 }
 
