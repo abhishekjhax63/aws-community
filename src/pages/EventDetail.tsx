@@ -12,6 +12,7 @@ import {
   Users,
 } from "lucide-react";
 import { ErrorState, LoadingState } from "../components/Page";
+import Reveal from "../components/Reveal";
 import { getEventBySlug, getMyProfile, registerForEvent } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
@@ -84,7 +85,7 @@ export default function EventDetail() {
   if (error || !data) {
     return (
       <section className="section-pad content-section">
-        <ErrorState message={error ?? "This event could not be found."} />
+        <ErrorState title="Event not found" message={error ?? "This event could not be found."} />
         <div className="profile-back">
           <Link className="text-link" to="/events">
             <ArrowLeft size={14} /> Back to all events
@@ -135,7 +136,7 @@ export default function EventDetail() {
 
       <section className="section-pad content-section event-detail-section">
         <div className="event-detail-grid">
-          <div className="event-detail-main">
+          <Reveal className="event-detail-main">
             <p className="event-lede">{event.short_description}</p>
             {event.full_description && (
               <div className="event-description">
@@ -183,9 +184,9 @@ export default function EventDetail() {
                 <p>{event.important_instructions}</p>
               </div>
             )}
-          </div>
+          </Reveal>
 
-          <aside className="event-detail-side">
+          <Reveal as="aside" className="event-detail-side" delay={120}>
             <div className="event-side-card">
               <h3>Event details</h3>
               <dl>
@@ -248,7 +249,7 @@ export default function EventDetail() {
                 </p>
               )}
             </div>
-          </aside>
+          </Reveal>
         </div>
 
         {showForm && registrationOpen && (

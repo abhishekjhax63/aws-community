@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ShieldAlert } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { authSetupHint } from "../lib/supabase";
+import Reveal from "./Reveal";
 
 /** Shared layout for all /auth/* screens, including the not-configured notice. */
 export default function AuthShell({
@@ -25,7 +26,7 @@ export default function AuthShell({
   return (
     <section className="auth-page">
       <div className="auth-panel">
-        <div className="auth-panel-intro">
+        <Reveal className="auth-panel-intro">
           <span className="eyebrow light-eyebrow">{eyebrow}</span>
           <h1>
             {title}
@@ -42,9 +43,9 @@ export default function AuthShell({
             <li>Keep your student profile in one place</li>
             <li>Share ideas through the suggestion box</li>
           </ul>
-        </div>
+        </Reveal>
 
-        <div className="auth-card">
+        <Reveal className="auth-card" delay={120}>
           {!configured && (
             <div className="auth-notice" role="alert">
               <ShieldAlert size={16} />
@@ -53,7 +54,7 @@ export default function AuthShell({
           )}
           {children}
           {footer ? <div className="auth-footer">{footer}</div> : null}
-        </div>
+        </Reveal>
       </div>
 
       <div className="auth-back">

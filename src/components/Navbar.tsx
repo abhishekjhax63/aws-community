@@ -34,7 +34,7 @@ export default function Navbar() {
     <header className={scrolled ? "site-header is-scrolled" : "site-header"}>
       <Link className="brand" to="/" aria-label="AWS Builder Community, home">
         <span className="brand-mark" aria-hidden="true">
-          <img src="/assets/sbg-mark.jpg" alt="" />
+          <img src="/assets/sbg-mark.png" alt="" width={42} height={42} />
         </span>
         <span className="brand-copy">
           <strong>BUILDER COMMUNITY</strong>

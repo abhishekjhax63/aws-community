@@ -1,4 +1,4 @@
-import { Component, type ReactNode } from "react";
+import { Component, lazy, Suspense, type ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Layout from "./components/Layout";
 import { LoadingState } from "./components/Page";
@@ -19,8 +19,11 @@ import Verify from "./pages/auth/Verify";
 import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import Profile from "./pages/Profile";
-import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+
+// The admin control room is only ever reached by staff, so it is kept out of the
+// public bundle and fetched on demand.
+const Admin = lazy(() => import("./pages/Admin"));
 
 /** Blocks access to private student pages until a Supabase session exists. */
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -69,35 +72,43 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 export default function App() {
   return (
     <ErrorBoundary>
-      <Routes>
-        <Route path="/admin" element={<Admin />} />
-        <Route element={<Layout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/members" element={<Members />} />
-          <Route path="/members/:id" element={<MemberProfile />} />
-          <Route path="/events" element={<Events />} />
-          <Route path="/events/:slug" element={<EventDetail />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/updates" element={<Updates />} />
-          <Route path="/updates/:slug" element={<UpdateDetail />} />
-          <Route path="/learning" element={<Learning />} />
-          <Route path="/suggestions" element={<Suggestions />} />
-          <Route path="/auth/signup" element={<Signup />} />
-          <Route path="/auth/verify" element={<Verify />} />
-          <Route path="/auth/login" element={<Login />} />
-          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-          <Route
-            path="/profile"
-            element={
-              <RequireAuth>
-                <Profile />
-              </RequireAuth>
-            }
-          />
-          <Route path="*" element={<NotFoundRoute />} />
-        </Route>
-      </Routes>
+      <Suspense
+        fallback={
+          <div className="auth-guard">
+            <LoadingState label="Loading" />
+          </div>
+        }
+      >
+        <Routes>
+          <Route path="/admin" element={<Admin />} />
+          <Route element={<Layout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/members" element={<Members />} />
+            <Route path="/members/:id" element={<MemberProfile />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/events/:slug" element={<EventDetail />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/updates" element={<Updates />} />
+            <Route path="/updates/:slug" element={<UpdateDetail />} />
+            <Route path="/learning" element={<Learning />} />
+            <Route path="/suggestions" element={<Suggestions />} />
+            <Route path="/auth/signup" element={<Signup />} />
+            <Route path="/auth/verify" element={<Verify />} />
+            <Route path="/auth/login" element={<Login />} />
+            <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+            <Route
+              path="/profile"
+              element={
+                <RequireAuth>
+                  <Profile />
+                </RequireAuth>
+              }
+            />
+            <Route path="*" element={<NotFoundRoute />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </ErrorBoundary>
   );
 }

@@ -4,6 +4,7 @@ import { ErrorState, LoadingState, PageHero } from "../components/Page";
 import { getGallery } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useDocumentTitle } from "../lib/hooks";
+import { mergePhotos } from "../data/photos";
 import type { GalleryItem } from "../lib/types";
 
 export default function Gallery() {
@@ -12,7 +13,7 @@ export default function Gallery() {
   const [category, setCategory] = useState("all");
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
-  const items = data ?? [];
+  const items = useMemo(() => mergePhotos(data ?? []), [data]);
   const categories = useMemo(
     () => Array.from(new Set(items.map((item) => item.category).filter(Boolean))),
     [items],
@@ -68,26 +69,23 @@ export default function Gallery() {
 
         {loading ? (
           <LoadingState label="Loading gallery" />
-        ) : error ? (
+        ) : error && visible.length === 0 ? (
           <ErrorState message={error} />
         ) : visible.length === 0 ? (
-          <div className="gallery-grid">
-            <div className="gallery-reel">
-              <video src="/assets/community-reel.mp4" poster="/assets/sbg-banner.jpg" controls muted playsInline preload="metadata" aria-label="AWS Student Builder Group community reel" />
-              <span className="gallery-reel-label">01 / COMMUNITY REEL</span>
-            </div>
-            <div className="gallery-empty">
-              <span className="empty-overline">THE VISUAL JOURNAL</span>
-              <h3>
-                First moments
-                <br />
-                are still ahead.
-              </h3>
-              <p>Approved community photos and videos will find a home here. This space will grow as we build together.</p>
-              <span className="gallery-empty-mark">
-                <Sparkles size={19} />
-              </span>
-            </div>
+          <div className="gallery-empty">
+            <span className="empty-overline">THE VISUAL JOURNAL</span>
+            <h3>
+              First moments
+              <br />
+              are still ahead.
+            </h3>
+            <p>
+              Approved community photographs will find a home here. We show only real photos from our
+              events — nothing invented.
+            </p>
+            <span className="gallery-empty-mark">
+              <Sparkles size={19} />
+            </span>
           </div>
         ) : (
           <div className="gallery-masonry">

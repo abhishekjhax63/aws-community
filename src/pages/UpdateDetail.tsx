@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowUpRight, CalendarDays, Share2 } from "lucide-react";
 import { ErrorState, LoadingState } from "../components/Page";
+import Reveal from "../components/Reveal";
 import { getAnnouncementBySlug } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useDocumentTitle } from "../lib/hooks";
@@ -23,7 +24,7 @@ export default function UpdateDetail() {
   if (error || !data) {
     return (
       <section className="section-pad content-section">
-        <ErrorState message={error ?? "This update could not be found."} />
+        <ErrorState title="Update not found" message={error ?? "This update could not be found."} />
         <div className="profile-back">
           <Link className="text-link" to="/updates">
             <ArrowLeft size={14} /> Back to all updates
@@ -43,7 +44,7 @@ export default function UpdateDetail() {
         </Link>
       </div>
 
-      <header className="update-detail-head">
+      <Reveal as="header" className="update-detail-head">
         <span className="update-card-meta">
           {update.category}
           {update.priority === "important" ? " · IMPORTANT" : ""}
@@ -59,19 +60,19 @@ export default function UpdateDetail() {
             </a>
           )}
         </div>
-      </header>
+      </Reveal>
 
       {update.cover_image_url && (
-        <div className="update-detail-image">
+        <Reveal className="update-detail-image" variant="blur" delay={100}>
           <img src={update.cover_image_url} alt="" />
-        </div>
+        </Reveal>
       )}
 
-      <div className="update-detail-body">
+      <Reveal className="update-detail-body" delay={160}>
         {update.description.split(/\n{2,}/).map((paragraph, index) => (
           <p key={index}>{paragraph}</p>
         ))}
-      </div>
+      </Reveal>
 
       <div className="event-detail-foot">
         <Link className="text-link" to="/updates">

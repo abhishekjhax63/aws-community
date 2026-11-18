@@ -7,7 +7,7 @@ The site identifies itself as an independent student community and does not clai
 ## Run locally
 
 1. Install dependencies with `npm install`.
-2. Copy `.env.example` to `.env` and add the Supabase project URL and **server-only** service-role key.
+2. Copy `.env.example` to `.env`. Set the Supabase project URL, the **server-only** service-role key, and the matching `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` pair the browser build reads (the anon key is public by design; RLS protects data). Without the `VITE_*` pair the site still renders, but student auth flows stay disabled.
 3. Apply `supabase/migrations/202611180001_initial_schema.sql` in the Supabase SQL editor or with the Supabase CLI.
 4. Run `npm run dev:full` to start Vite and the API together.
 5. Open the local URL printed by Vite. The API health endpoint is `/api/health`.

@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Download, LogOut, Plus, RefreshCw, Save, Search, Trash2, X } from "lucide-react";
 import { ErrorState, LoadingState } from "../components/Page";
+import Reveal from "../components/Reveal";
 import { suggestionCategories } from "../data/content";
 import { useDocumentTitle } from "../lib/hooks";
 import { formatDateTime, humanizeStatus } from "../lib/format";
@@ -190,7 +191,7 @@ function OverviewPanel({ onSessionEnd }: { onSessionEnd: () => void }) {
   ];
 
   return (
-    <section className="admin-section">
+    <Reveal as="section" className="admin-section">
       <div className="admin-section-head">
         <h2>Overview</h2>
         <button className="text-link" type="button" onClick={load}>
@@ -198,11 +199,11 @@ function OverviewPanel({ onSessionEnd }: { onSessionEnd: () => void }) {
         </button>
       </div>
       <div className="admin-metric-grid">
-        {cards.map((card) => (
-          <div className="admin-metric" key={card.label}>
+        {cards.map((card, index) => (
+          <Reveal className="admin-metric" key={card.label} delay={index * 70}>
             <span>{card.label.toUpperCase()}</span>
             <strong>{card.value}</strong>
-          </div>
+          </Reveal>
         ))}
       </div>
       <div className="admin-panel">
@@ -221,7 +222,7 @@ function OverviewPanel({ onSessionEnd }: { onSessionEnd: () => void }) {
           </ul>
         )}
       </div>
-    </section>
+    </Reveal>
   );
 }
 

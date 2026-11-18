@@ -111,7 +111,9 @@ export default function Events() {
                 <div className="event-card-body">
                   <div className="event-meta">
                     <span>{event.category}</span>
-                    <span>{humanizeStatus(event.registration_status)}</span>
+                    <span className={`status-badge status-${event.registration_status}`}>
+                      {humanizeStatus(event.registration_status)}
+                    </span>
                   </div>
                   <h3>
                     <Link to={`/events/${event.slug}`}>{event.title}</Link>
@@ -127,7 +129,7 @@ export default function Events() {
                       </span>
                     )}
                   </div>
-                  <Link className="text-link" to={`/events/${event.slug}`}>
+                  <Link className="text-link event-arrow" to={`/events/${event.slug}`}>
                     View event details <ArrowUpRight size={14} />
                   </Link>
                 </div>

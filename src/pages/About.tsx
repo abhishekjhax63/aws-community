@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, ArrowUpRight, Cloud, Code2, MapPin, Sparkles, Target, Users } from "lucide-react";
 import { PageHero } from "../components/Page";
 import Reveal from "../components/Reveal";
+import TextReveal from "../components/TextReveal";
 import { useDocumentTitle } from "../lib/hooks";
 
 const focusAreas = [
@@ -39,7 +40,7 @@ export default function About() {
         }
       />
 
-      <section className="section-pad content-section">
+      <section className="section-pad content-section bg-grid">
         <div className="section-index">
           <span>01</span>
           <span className="index-rule" /> MISSION
@@ -48,9 +49,15 @@ export default function About() {
           <Reveal className="intro-heading">
             <p className="eyebrow">WHY WE EXIST</p>
             <h2>
-              Cloud skills for
+              <TextReveal as="span" mode="word" stagger={55}>
+                Cloud skills for
+              </TextReveal>
               <br />
-              <span>every branch.</span>
+              <span>
+                <TextReveal as="span" mode="word" stagger={55} delay={200}>
+                  every branch.
+                </TextReveal>
+              </span>
             </h2>
           </Reveal>
           <Reveal className="intro-copy" delay={80}>
@@ -84,7 +91,7 @@ export default function About() {
         </div>
       </section>
 
-      <section className="section-pad content-section values-section">
+      <section className="section-pad content-section values-section bg-grid">
         <div className="section-index">
           <span>02</span>
           <span className="index-rule" /> HOW WE WORK

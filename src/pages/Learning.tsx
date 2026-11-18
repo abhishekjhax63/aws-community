@@ -20,7 +20,7 @@ export default function Learning() {
         intro="A guided path from cloud fundamentals to architecture and AI. Every card links to official AWS documentation and Skill Builder — go at your own pace."
       />
 
-      <section className="section-pad content-section">
+      <section className="section-pad content-section bg-grid">
         <div className="section-index">
           <span>01</span>
           <span className="index-rule" /> YOUR ROADMAP

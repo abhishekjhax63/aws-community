@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, KeyRound, LogOut, Save, Ticket, UserRound } from "lucide-react";
 import { ErrorState, LoadingState, PageHero } from "../components/Page";
+import Reveal from "../components/Reveal";
 import { getMyProfile, getMyRegistrations, updateMyProfile } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { useDocumentTitle } from "../lib/hooks";
@@ -91,7 +92,7 @@ export default function Profile() {
           <ErrorState message={error} />
         ) : (
           <div className="profile-grid">
-            <div className="profile-card">
+            <Reveal className="profile-card">
               <div className="profile-identity">
                 <span className="profile-avatar">
                   {profile?.photo_url ? (
@@ -142,9 +143,9 @@ export default function Profile() {
                   {saving ? "SAVING…" : "SAVE CHANGES"} <Save size={15} />
                 </button>
               </form>
-            </div>
+            </Reveal>
 
-            <aside className="profile-side">
+            <Reveal as="aside" className="profile-side" delay={120}>
               <div className="profile-panel">
                 <div className="profile-panel-head">
                   <Ticket size={16} />
@@ -195,7 +196,7 @@ export default function Profile() {
                   </button>
                 </div>
               </div>
-            </aside>
+            </Reveal>
           </div>
         )}
       </section>

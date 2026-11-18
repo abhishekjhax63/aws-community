@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, ChevronUp } from "lucide-react";
 import { learningPaths } from "../data/content";
 import { useSiteSettings } from "../lib/site";
+import Reveal from "./Reveal";
 import SocialLinks from "./SocialLinks";
 
 const exploreLinks = [
@@ -18,11 +19,11 @@ export default function Footer() {
 
   return (
     <footer className="site-footer">
-      <div className="footer-top">
+      <Reveal className="footer-top" amount={0.08}>
         <div className="footer-intro">
           <Link className="brand footer-brand" to="/">
             <span className="brand-mark">
-              <img src="/assets/sbg-mark.jpg" alt="" />
+              <img src="/assets/sbg-mark.png" alt="" width={42} height={42} />
             </span>
             <span className="brand-copy">
               <strong>BUILDER COMMUNITY</strong>
@@ -77,15 +78,15 @@ export default function Footer() {
             <Link to="/auth/signup">Create account</Link>
           </div>
         </div>
-      </div>
+      </Reveal>
 
-      <div className="footer-bottom">
+      <Reveal className="footer-bottom" delay={120} amount={0.08}>
         <span>© {new Date().getFullYear()} AWS Builder Community · Amity University Patna</span>
         <span>AN INDEPENDENT STUDENT COMMUNITY. NOT AN OFFICIAL AWS AFFILIATE.</span>
         <a href="#top" onClick={(event) => { event.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
           BACK TO TOP <ChevronUp size={13} />
         </a>
-      </div>
+      </Reveal>
     </footer>
   );
 }

@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowDownRight,
@@ -10,16 +11,19 @@ import {
   Code2,
   Lightbulb,
   MapPin,
-  Network,
   Sparkles,
   Users,
 } from "lucide-react";
 import Reveal from "../components/Reveal";
+import TextReveal from "../components/TextReveal";
 import StatNumber from "../components/StatNumber";
+import LogoAssembly from "../components/LogoAssembly";
+import PhotoSlideshow from "../components/PhotoSlideshow";
 import SuggestionForm from "../components/SuggestionForm";
 import {
   getAnnouncements,
   getEvents,
+  getGallery,
   getMembers,
   getStats,
 } from "../lib/api";
@@ -27,7 +31,8 @@ import { useAsync } from "../lib/useAsync";
 import { useCountdown, useDocumentTitle } from "../lib/hooks";
 import { daysUntil, formatDate, initialsFor } from "../lib/format";
 import { learningPaths } from "../data/content";
-import type { Announcement, CommunityEvent, CommunityMember, CommunityStats } from "../lib/types";
+import { mergePhotos, photoOnly } from "../data/photos";
+import type { Announcement, CommunityEvent, CommunityMember, CommunityStats, GalleryItem } from "../lib/types";
 
 const focusAreas = [
   { icon: Cloud, label: "Cloud computing", detail: "Understand the building blocks" },
@@ -40,6 +45,7 @@ type HomeData = {
   events: CommunityEvent[];
   members: CommunityMember[];
   announcements: Announcement[];
+  gallery: GalleryItem[];
 };
 
 function CountdownPill({ target }: { target: string }) {
@@ -57,20 +63,70 @@ function CountdownPill({ target }: { target: string }) {
 
 export default function Home() {
   useDocumentTitle();
+  const heroRef = useRef<HTMLElement | null>(null);
+
+  // Subtle mouse-driven parallax on the hero visual (desktop pointers only).
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!window.matchMedia("(hover: hover) and (min-width: 900px)").matches) return;
+
+    let frame = 0;
+    let rx = 0;
+    let ry = 0;
+    const apply = () => {
+      frame = 0;
+      hero.style.setProperty("--hero-rx", `${rx.toFixed(3)}deg`);
+      hero.style.setProperty("--hero-ry", `${ry.toFixed(3)}deg`);
+    };
+    const onMove = (event: PointerEvent) => {
+      const rect = hero.getBoundingClientRect();
+      const nx = (event.clientX - rect.left) / rect.width - 0.5;
+      const ny = (event.clientY - rect.top) / rect.height - 0.5;
+      ry = nx * 7;
+      rx = ny * -5;
+      if (!frame) frame = requestAnimationFrame(apply);
+    };
+    const onLeave = () => {
+      rx = 0;
+      ry = 0;
+      if (!frame) frame = requestAnimationFrame(apply);
+    };
+    hero.addEventListener("pointermove", onMove);
+    hero.addEventListener("pointerleave", onLeave);
+    return () => {
+      hero.removeEventListener("pointermove", onMove);
+      hero.removeEventListener("pointerleave", onLeave);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+
   const { data, loading } = useAsync<HomeData>(async (signal) => {
-    const [stats, events, members, announcements] = await Promise.all([
+    const [stats, events, members, announcements, gallery] = await Promise.all([
       getStats(signal).catch(() => null),
       getEvents(signal).catch(() => []),
       getMembers(signal).catch(() => []),
       getAnnouncements(signal).catch(() => []),
+      getGallery(signal).catch(() => []),
     ]);
-    return { stats, events, members, announcements };
+    return { stats, events, members, announcements, gallery };
   }, []);
 
   const stats = data?.stats ?? null;
   const events = data?.events ?? [];
   const members = data?.members ?? [];
   const announcements = data?.announcements ?? [];
+
+  // Photographs only — no videos, no captions rendered over the images.
+  const photos = useMemo(
+    () =>
+      photoOnly(mergePhotos(data?.gallery ?? [])).map((item) => ({
+        src: item.media_url,
+        alt: item.title || item.caption || "Community event photograph",
+      })),
+    [data?.gallery],
+  );
 
   const now = Date.now();
   const featured =
@@ -80,7 +136,14 @@ export default function Home() {
 
   return (
     <>
-      <section className="hero" id="home">
+      <section className="hero" id="home" ref={heroRef}>
+        <div className="floating-dots" aria-hidden="true">
+          <span style={{ top: "15%", left: "5%", animationDelay: "0s" }} />
+          <span style={{ top: "25%", right: "8%", animationDelay: "2s" }} />
+          <span style={{ bottom: "30%", left: "12%", animationDelay: "4s" }} />
+          <span style={{ top: "55%", right: "15%", animationDelay: "1s" }} />
+          <span style={{ bottom: "20%", right: "30%", animationDelay: "3s" }} />
+        </div>
         <div className="hero-topline">
           <span>
             <span className="live-dot" /> STUDENT-LED. BUILDER-FOCUSED.
@@ -93,9 +156,15 @@ export default function Home() {
           <div className="hero-copy">
             <p className="eyebrow light-eyebrow">AWS STUDENT BUILDER GROUP</p>
             <h1>
-              Build the cloud.
+              <TextReveal as="span" mode="word" stagger={60}>
+                Build the cloud.
+              </TextReveal>
               <br />
-              <em>Create the future.</em>
+              <em>
+                <TextReveal as="span" mode="word" stagger={60} delay={300}>
+                  Create the future.
+                </TextReveal>
+              </em>
             </h1>
             <p className="hero-intro">
               An AWS-focused student builder community at Amity University Patna. Learn cloud
@@ -106,7 +175,7 @@ export default function Home() {
               <Link className="button button-orange" to="/about">
                 Explore community <ArrowRight size={16} />
               </Link>
-              <Link className="text-link text-link-light" to="/events">
+              <Link className="button button-secondary" to="/events">
                 Discover events <ArrowDownRight size={16} />
               </Link>
             </div>
@@ -117,33 +186,13 @@ export default function Home() {
               <span className="coordinate-place">AMITY UNIVERSITY PATNA</span>
             </div>
           </div>
-          <div className="hero-art" aria-label="AWS Student Builder Group title video">
+          <div className="hero-art" aria-label="Community event photographs">
             <div className="hero-art-glow" />
-            <video
-              className="hero-video"
-              src="/assets/community-reel.mp4"
-              poster="/assets/sbg-banner.jpg"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              aria-label="Community visual"
+            <PhotoSlideshow
+              variant="hero"
+              photos={photos}
+              ariaLabel="Community event photographs"
             />
-            <div className="video-frame">
-              <span className="frame-label">
-                <span className="live-dot" /> CAMPUS BUILDERS / EST. AMITY PATNA
-              </span>
-              <span className="frame-index">01—04</span>
-            </div>
-            <div className="floating-note">
-              <Network size={16} />
-              <span>
-                Ideas connected.
-                <br />
-                <b>Built together.</b>
-              </span>
-            </div>
           </div>
         </div>
         <a className="hero-scroll" href="#about">
@@ -153,8 +202,11 @@ export default function Home() {
         <div className="hero-side-label">LEARN CLOUD. BUILD BEYOND. INNOVATE TOGETHER.</div>
       </section>
 
+      {/* Signature: scroll-driven four-piece logo assembly */}
+      <LogoAssembly />
+
       {/* A. Community introduction */}
-      <section className="intro-section section-pad" id="about">
+      <section className="intro-section section-pad bg-grid" id="about">
         <div className="section-index">
           <span>01</span>
           <span className="index-rule" /> THE COMMUNITY
@@ -163,9 +215,15 @@ export default function Home() {
           <Reveal className="intro-heading">
             <p className="eyebrow">WHO WE ARE</p>
             <h2>
-              More than a community.
+              <TextReveal as="span" mode="word" stagger={55}>
+                More than a community.
+              </TextReveal>
               <br />
-              <span>A place to build.</span>
+              <span>
+                <TextReveal as="span" mode="word" stagger={55} delay={200}>
+                  A place to build.
+                </TextReveal>
+              </span>
             </h2>
           </Reveal>
           <Reveal className="intro-copy" delay={80}>
@@ -202,8 +260,24 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Photo-only cinematic journal band */}
+      <section className="photo-band section-pad" aria-label="Community photographs">
+        <div className="photo-band-head">
+          <p className="eyebrow">THE VISUAL JOURNAL</p>
+          <h2>
+            Moments from <em>our builders.</em>
+          </h2>
+          <p className="photo-band-note">
+            Photographs from our events, workshops and build sessions — nothing added, nothing staged.
+          </p>
+        </div>
+        <div className="photo-band-frame">
+          <PhotoSlideshow variant="cinema" photos={photos} ariaLabel="Community event photographs" />
+        </div>
+      </section>
+
       {/* B. Upcoming featured event */}
-      <section className="feature-section section-pad">
+      <section className="feature-section section-pad bg-grid">
         <div className="section-index">
           <span>02</span>
           <span className="index-rule" /> WHAT&apos;S NEXT
@@ -212,9 +286,15 @@ export default function Home() {
           <div>
             <p className="eyebrow">UPCOMING FEATURED EVENT</p>
             <h2>
-              Meet us
+              <TextReveal as="span" mode="word" stagger={55}>
+                Meet us
+              </TextReveal>
               <br />
-              <span>in the making.</span>
+              <span>
+                <TextReveal as="span" mode="word" stagger={55} delay={200}>
+                  in the making.
+                </TextReveal>
+              </span>
             </h2>
           </div>
           <Link className="text-link" to="/events">
@@ -303,9 +383,15 @@ export default function Home() {
           <div>
             <p className="eyebrow light-eyebrow">ONE COMMUNITY. MANY POSSIBILITIES.</p>
             <h2>
-              Meet your
+              <TextReveal as="span" mode="word" stagger={55}>
+                Meet your
+              </TextReveal>
               <br />
-              <em>fellow builder.</em>
+              <em>
+                <TextReveal as="span" mode="word" stagger={55} delay={200}>
+                  fellow builder.
+                </TextReveal>
+              </em>
             </h2>
           </div>
           <p className="leader-caption">
@@ -362,8 +448,8 @@ export default function Home() {
               </Link>
             </div>
             <div className="member-directory-grid">
-              {builders.map((member) => (
-                <Link className="member-card" to={`/members/${member.id}`} key={member.id}>
+              {builders.map((member, index) => (
+                <Link className="member-card" to={`/members/${member.id}`} key={member.id} style={{ transitionDelay: `${index * 80}ms` }}>
                   {member.photo_url ? (
                     <img src={member.photo_url} alt={member.full_name} loading="lazy" />
                   ) : (
@@ -388,7 +474,7 @@ export default function Home() {
       </section>
 
       {/* D. Community highlights */}
-      <section className="highlights-section section-pad">
+      <section className="highlights-section section-pad bg-grid">
         <div className="section-index">
           <span>04</span>
           <span className="index-rule" /> COMMUNITY HIGHLIGHTS
@@ -406,11 +492,11 @@ export default function Home() {
                 ["Workshops", stats?.workshops],
                 ["Projects built", stats?.projects],
               ] as Array<[string, number | null | undefined]>
-            ).map(([label, value]) => (
-              <div className="stat-item" key={label}>
+            ).map(([label, value], index) => (
+              <Reveal className="stat-item" key={label} delay={index * 80}>
                 <StatNumber value={value} />
                 <span>{label}</span>
-              </div>
+              </Reveal>
             ))}
           </div>
           <p>Published community records only. Counts will appear as records are added.</p>
@@ -427,9 +513,15 @@ export default function Home() {
           <div>
             <p className="eyebrow light-eyebrow">NEWS FROM THE BUILDERS</p>
             <h2>
-              Notes from
+              <TextReveal as="span" mode="word" stagger={55}>
+                Notes from
+              </TextReveal>
               <br />
-              <em>the community.</em>
+              <em>
+                <TextReveal as="span" mode="word" stagger={55} delay={200}>
+                  the community.
+                </TextReveal>
+              </em>
             </h2>
           </div>
           <Link className="text-link text-link-light" to="/updates">
@@ -439,7 +531,7 @@ export default function Home() {
         {latestUpdates.length > 0 ? (
           <div className="updates-list">
             {latestUpdates.map((announcement, index) => (
-              <Link className="update-row" to={`/updates/${announcement.slug}`} key={announcement.id}>
+              <Link className="update-row" to={`/updates/${announcement.slug}`} key={announcement.id} style={{ transitionDelay: `${index * 80}ms` }}>
                 <span className="update-number">0{index + 1}</span>
                 <div className="update-copy">
                   <span>
@@ -481,9 +573,15 @@ export default function Home() {
           <div>
             <p className="eyebrow light-eyebrow">START WHERE YOU ARE</p>
             <h2>
-              Learn it.
+              <TextReveal as="span" mode="word" stagger={55}>
+                Learn it.
+              </TextReveal>
               <br />
-              <em>Then make it.</em>
+              <em>
+                <TextReveal as="span" mode="word" stagger={55} delay={200}>
+                  Then make it.
+                </TextReveal>
+              </em>
             </h2>
           </div>
           <div className="learning-head-note">
@@ -502,8 +600,8 @@ export default function Home() {
           </div>
         </div>
         <div className="learning-cards">
-          {learningPaths.slice(0, 3).map((path) => (
-            <Link className="learning-card" to="/learning" key={path.number}>
+          {learningPaths.slice(0, 3).map((path, index) => (
+            <Link className="learning-card" to="/learning" key={path.number} style={{ transitionDelay: `${index * 80}ms` }}>
               <div className="learning-card-top">
                 <span>
                   {path.number} / {String(learningPaths.length).padStart(2, "0")}
@@ -533,7 +631,7 @@ export default function Home() {
       </section>
 
       {/* G. Student suggestion box */}
-      <section className="suggestion-section section-pad">
+      <section className="suggestion-section section-pad bg-grid">
         <div className="section-index">
           <span>07</span>
           <span className="index-rule" /> STUDENT SUGGESTION BOX
@@ -544,9 +642,15 @@ export default function Home() {
               <Lightbulb size={13} /> SHARE YOUR IDEA
             </p>
             <h2>
-              Your ideas can build
+              <TextReveal as="span" mode="word" stagger={55}>
+                Your ideas can build
+              </TextReveal>
               <br />
-              <span>what&apos;s next.</span>
+              <span>
+                <TextReveal as="span" mode="word" stagger={55} delay={200}>
+                  what&apos;s next.
+                </TextReveal>
+              </span>
             </h2>
             <p>
               Have an idea for a workshop, event, project or community improvement? Share it with us.
@@ -581,7 +685,7 @@ export default function Home() {
             <Link to="/auth/signup" className="button button-orange">
               Join the community <ArrowUpRight size={16} />
             </Link>
-            <Link to="/events" className="text-link text-link-light">
+            <Link to="/events" className="button button-secondary">
               <Users size={15} /> Explore events
             </Link>
           </div>

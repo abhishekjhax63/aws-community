@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowUpRight, Github, Linkedin, Mail } from "lucide-react";
 import { ErrorState, LoadingState } from "../components/Page";
+import Reveal from "../components/Reveal";
 import { getMemberById } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useDocumentTitle } from "../lib/hooks";
@@ -23,7 +24,7 @@ export default function MemberProfile() {
   if (error || !data) {
     return (
       <section className="section-pad content-section">
-        <ErrorState message={error ?? "This member profile could not be found."} />
+        <ErrorState title="Profile not found" message={error ?? "This member profile could not be found."} />
         <div className="profile-back">
           <Link className="text-link" to="/members">
             <ArrowLeft size={14} /> Back to all members
@@ -44,7 +45,7 @@ export default function MemberProfile() {
       </div>
 
       <div className="member-profile-layout">
-        <div className="member-profile-photo">
+        <Reveal className="member-profile-photo" variant="blur">
           {member.photo_url ? (
             <img src={member.photo_url} alt={member.full_name} />
           ) : (
@@ -53,9 +54,9 @@ export default function MemberProfile() {
           <span className="photo-caption">
             {member.team?.name ? member.team.name.toUpperCase() : "COMMUNITY BUILDER"}
           </span>
-        </div>
+        </Reveal>
 
-        <div className="member-profile-detail">
+        <Reveal className="member-profile-detail" delay={120}>
           <span className="eyebrow">{member.designation.toUpperCase()}</span>
           <h1>{member.full_name}</h1>
           <p className="member-detail-meta">
@@ -117,7 +118,7 @@ export default function MemberProfile() {
               <Mail size={15} /> Suggest a collaboration
             </Link>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );
