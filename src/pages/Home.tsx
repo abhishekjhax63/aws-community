@@ -4,14 +4,9 @@ import {
   ArrowDownRight,
   ArrowRight,
   ArrowUpRight,
-  BookOpen,
   CalendarDays,
-  Check,
-  Cloud,
-  Code2,
   Lightbulb,
   MapPin,
-  Sparkles,
   Users,
 } from "lucide-react";
 import Reveal from "../components/Reveal";
@@ -19,6 +14,8 @@ import TextReveal from "../components/TextReveal";
 import StatNumber from "../components/StatNumber";
 import LogoAssembly from "../components/LogoAssembly";
 import PhotoSlideshow from "../components/PhotoSlideshow";
+import SectionMarquee from "../components/SectionMarquee";
+import TeamCarousel from "../components/TeamCarousel";
 import SuggestionForm from "../components/SuggestionForm";
 import {
   getAnnouncements,
@@ -30,15 +27,8 @@ import {
 import { useAsync } from "../lib/useAsync";
 import { useCountdown, useDocumentTitle } from "../lib/hooks";
 import { daysUntil, formatDate, initialsFor } from "../lib/format";
-import { learningPaths } from "../data/content";
 import { mergePhotos, photoOnly } from "../data/photos";
 import type { Announcement, CommunityEvent, CommunityMember, CommunityStats, GalleryItem } from "../lib/types";
-
-const focusAreas = [
-  { icon: Cloud, label: "Cloud computing", detail: "Understand the building blocks" },
-  { icon: Code2, label: "Serverless & software", detail: "Turn ideas into working systems" },
-  { icon: Sparkles, label: "AI & machine learning", detail: "Explore what intelligent apps can do" },
-];
 
 type HomeData = {
   stats: CommunityStats | null;
@@ -144,9 +134,20 @@ export default function Home() {
           <span style={{ top: "55%", right: "15%", animationDelay: "1s" }} />
           <span style={{ bottom: "20%", right: "30%", animationDelay: "3s" }} />
         </div>
+        <div className="hero-watermark" aria-hidden="true">
+          <span className="hero-watermark-word hero-watermark-word-first" data-watermark="BUILDER">
+            BUILDER
+          </span>
+          <span className="hero-watermark-word hero-watermark-word-second" data-watermark="COMMUNITY">
+            COMMUNITY
+          </span>
+        </div>
         <div className="hero-topline">
-          <span>
-            <span className="live-dot" /> STUDENT-LED. BUILDER-FOCUSED.
+          <span className="hero-status" aria-label="Student-led and builder-focused">
+            <span className="live-dot" aria-hidden="true" />
+            <span className="hero-status-student">STUDENT-LED</span>
+            <span className="hero-status-divider" aria-hidden="true">/</span>
+            <span className="hero-status-builder">BUILDER-FOCUSED</span>
           </span>
           <span className="hero-location">
             <MapPin size={13} /> PATNA, INDIA
@@ -195,73 +196,34 @@ export default function Home() {
             />
           </div>
         </div>
-        <a className="hero-scroll" href="#about">
+        <a className="hero-scroll" href="#community-gallery">
           <span>SCROLL TO EXPLORE</span>
           <ArrowDownRight size={15} />
         </a>
         <div className="hero-side-label">LEARN CLOUD. BUILD BEYOND. INNOVATE TOGETHER.</div>
       </section>
 
+      <SectionMarquee
+        tone="light"
+        phrases={["LEARN CLOUD", "BUILD TOGETHER", "CREATE THE FUTURE"]}
+        speed={28}
+      />
+
       {/* Signature: scroll-driven four-piece logo assembly */}
       <LogoAssembly />
 
-      {/* A. Community introduction */}
-      <section className="intro-section section-pad bg-grid" id="about">
-        <div className="section-index">
-          <span>01</span>
-          <span className="index-rule" /> THE COMMUNITY
-        </div>
-        <div className="intro-grid">
-          <Reveal className="intro-heading">
-            <p className="eyebrow">WHO WE ARE</p>
-            <h2>
-              <TextReveal as="span" mode="word" stagger={55}>
-                More than a community.
-              </TextReveal>
-              <br />
-              <span>
-                <TextReveal as="span" mode="word" stagger={55} delay={200}>
-                  A place to build.
-                </TextReveal>
-              </span>
-            </h2>
-          </Reveal>
-          <Reveal className="intro-copy" delay={80}>
-            <p className="intro-lede">
-              We&apos;re a student-led campus community for anyone who wants to understand how cloud
-              technology works, then build something real with it.
-            </p>
-            <p>
-              <b>Our mission</b> is to make AWS and cloud skills approachable for every student at
-              Amity University Patna, whatever their branch or starting point.
-            </p>
-            <p>
-              <b>What we do:</b> hands-on workshops, cloud and serverless sessions, hackathons, and
-              time to work on ideas together.
-            </p>
-            <Link className="text-link" to="/about">
-              Read more <ArrowUpRight size={15} />
-            </Link>
-            <div className="focus-list">
-              {focusAreas.map(({ icon: Icon, label, detail }) => (
-                <div className="focus-row" key={label}>
-                  <span className="focus-icon">
-                    <Icon size={18} strokeWidth={1.6} />
-                  </span>
-                  <span className="focus-label">
-                    {label}
-                    <small>{detail}</small>
-                  </span>
-                  <ArrowUpRight size={15} className="focus-arrow" />
-                </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      <SectionMarquee
+        tone="dark"
+        phrases={["THE COMMUNITY MARK", "REAL PEOPLE", "REAL BUILDS"]}
+        speed={28}
+      />
 
       {/* Photo-only cinematic journal band */}
-      <section className="photo-band section-pad" aria-label="Community photographs">
+      <section
+        className="photo-band section-pad"
+        id="community-gallery"
+        aria-label="Community photographs"
+      >
         <div className="photo-band-head">
           <p className="eyebrow">THE VISUAL JOURNAL</p>
           <h2>
@@ -275,6 +237,8 @@ export default function Home() {
           <PhotoSlideshow variant="cinema" photos={photos} ariaLabel="Community event photographs" />
         </div>
       </section>
+
+      <SectionMarquee tone="dark" />
 
       {/* B. Upcoming featured event */}
       <section className="feature-section section-pad bg-grid">
@@ -373,6 +337,8 @@ export default function Home() {
         )}
       </section>
 
+      <SectionMarquee tone="light" />
+
       {/* C. Meet the builders */}
       <section className="leader-section section-pad">
         <div className="section-index section-index-light">
@@ -399,7 +365,12 @@ export default function Home() {
           </p>
         </div>
         <article className="leader-card">
+          <Reveal>
           <div className="leader-photo-wrap">
+            <span className="leader-photo-frame-corner tl" aria-hidden="true" />
+            <span className="leader-photo-frame-corner tr" aria-hidden="true" />
+            <span className="leader-photo-frame-corner bl" aria-hidden="true" />
+            <span className="leader-photo-frame-corner br" aria-hidden="true" />
             <img
               className="leader-photo"
               src="/assets/ayush-kumar.jpg"
@@ -408,36 +379,59 @@ export default function Home() {
             />
             <span className="photo-caption">CAMPUS BUILDER / 001</span>
           </div>
+          </Reveal>
           <div className="leader-details">
-            <div className="leader-role">
-              <span className="live-dot" /> STUDENT BUILDER GROUP LEADER
-            </div>
-            <h3>
-              Ayush Kumar<span>.</span>
-            </h3>
-            <p className="leader-study">B.Tech CSE · Artificial Intelligence &amp; Machine Learning · Year 2</p>
-            <p className="leader-bio">
-              At Amity School of Engineering and Technology, Ayush leads campus-wide cloud
-              initiatives, brings hands-on workshops to students, and helps grow a builder-first
-              developer community.
-            </p>
-            <div className="leader-interests">
-              <span>CLOUD ARCHITECTURE</span>
-              <span>GENERATIVE AI</span>
-              <span>FULL-STACK DEVELOPMENT</span>
-            </div>
-            <div className="leader-foot">
-              <span>
-                AMITY UNIVERSITY PATNA
-                <br />
-                PATNA, BIHAR, INDIA
-              </span>
-              <span className="leader-monogram">
-                AK<span> / BUILDER</span>
-              </span>
-            </div>
+            <Reveal delay={80}>
+              <div className="leader-role">
+                <span className="live-dot" /> STUDENT BUILDER GROUP LEADER
+              </div>
+            </Reveal>
+            <Reveal delay={140}>
+              <h3>
+                Ayush Kumar<span>.</span>
+              </h3>
+            </Reveal>
+            <Reveal delay={200}>
+              <p className="leader-study">B.Tech CSE · Artificial Intelligence &amp; Machine Learning · Year 2</p>
+            </Reveal>
+            <Reveal delay={260}>
+              <p className="leader-bio">
+                At Amity School of Engineering and Technology, Ayush leads campus-wide cloud
+                initiatives, brings hands-on workshops to students, and helps grow a builder-first
+                developer community.
+              </p>
+            </Reveal>
+            <Reveal delay={320}>
+              <div className="leader-interests">
+                <span>CLOUD ARCHITECTURE</span>
+                <span>GENERATIVE AI</span>
+                <span>FULL-STACK DEVELOPMENT</span>
+              </div>
+            </Reveal>
+            <Reveal delay={380}>
+              <div className="leader-foot">
+                <span>
+                  AMITY UNIVERSITY PATNA
+                  <br />
+                  PATNA, BIHAR, INDIA
+                </span>
+                <span className="leader-monogram">
+                  AK<span> / BUILDER</span>
+                </span>
+              </div>
+            </Reveal>
           </div>
         </article>
+
+        <div className="leader-teams">
+          <div className="leader-teams-head">
+            <span className="leader-teams-eyebrow">THE TEAMS · THREE SEATS EACH</span>
+            <p className="leader-teams-note">
+              It scrolls on its own — or step through the teams yourself.
+            </p>
+          </div>
+          <TeamCarousel />
+        </div>
 
         {builders.length > 0 && (
           <div className="member-directory">
@@ -473,6 +467,8 @@ export default function Home() {
         </div>
       </section>
 
+      <SectionMarquee tone="dark" />
+
       {/* D. Community highlights */}
       <section className="highlights-section section-pad bg-grid">
         <div className="section-index">
@@ -502,6 +498,8 @@ export default function Home() {
           <p>Published community records only. Counts will appear as records are added.</p>
         </div>
       </section>
+
+      <SectionMarquee tone="dark" />
 
       {/* E. Latest updates */}
       <section className="updates-section section-pad">
@@ -563,72 +561,7 @@ export default function Home() {
         )}
       </section>
 
-      {/* F. AWS learning preview */}
-      <section className="learning-section section-pad">
-        <div className="section-index section-index-light">
-          <span>06</span>
-          <span className="index-rule" /> THE LEARNING LAB
-        </div>
-        <div className="learning-head">
-          <div>
-            <p className="eyebrow light-eyebrow">START WHERE YOU ARE</p>
-            <h2>
-              <TextReveal as="span" mode="word" stagger={55}>
-                Learn it.
-              </TextReveal>
-              <br />
-              <em>
-                <TextReveal as="span" mode="word" stagger={55} delay={200}>
-                  Then make it.
-                </TextReveal>
-              </em>
-            </h2>
-          </div>
-          <div className="learning-head-note">
-            <BookOpen size={19} />
-            <p>Go at your own pace with trusted learning resources from AWS. No experience needed to get started.</p>
-          </div>
-        </div>
-        <div className="learning-roadmap">
-          <span>YOUR LEARNING PATH</span>
-          <div>
-            <b>FOUNDATIONS</b>
-            <span />
-            <b>BUILDING</b>
-            <span />
-            <b>ARCHITECTURE</b>
-          </div>
-        </div>
-        <div className="learning-cards">
-          {learningPaths.slice(0, 3).map((path, index) => (
-            <Link className="learning-card" to="/learning" key={path.number} style={{ transitionDelay: `${index * 80}ms` }}>
-              <div className="learning-card-top">
-                <span>
-                  {path.number} / {String(learningPaths.length).padStart(2, "0")}
-                </span>
-                <ArrowUpRight size={16} />
-              </div>
-              <div>
-                <span className="learning-services">{path.services}</span>
-                <h3>{path.title}</h3>
-                <p>{path.description}</p>
-              </div>
-              <div className="learning-card-bottom">
-                <span>EXPLORE LEARNING</span>
-                <ArrowRight size={15} />
-              </div>
-            </Link>
-          ))}
-        </div>
-        <div className="learning-preview-foot">
-          <Link className="button button-orange" to="/learning">
-            Explore learning <ArrowRight size={15} />
-          </Link>
-          <p className="learning-disclaimer">
-            <Check size={14} /> Links lead to official AWS documentation and Skill Builder.
-          </p>
-        </div>
-      </section>
+      <SectionMarquee tone="light" />
 
       {/* G. Student suggestion box */}
       <section className="suggestion-section section-pad bg-grid">
@@ -669,6 +602,8 @@ export default function Home() {
           </Reveal>
         </div>
       </section>
+
+      <SectionMarquee tone="light" />
 
       {/* H. Join community CTA */}
       <section className="final-banner">

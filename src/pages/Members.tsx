@@ -7,6 +7,7 @@ import { getMembers } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useDocumentTitle } from "../lib/hooks";
 import { initialsFor } from "../lib/format";
+import { teams } from "../data/content";
 import type { CommunityMember } from "../lib/types";
 
 const FILTERS = [
@@ -149,6 +150,54 @@ export default function Members() {
           <Link className="button button-orange" to="/auth/signup">
             Join the community <ArrowRight size={15} />
           </Link>
+        </div>
+      </section>
+
+      <section className="section-pad content-section members-teams-section">
+        <div className="members-teams-intro">
+          <p className="eyebrow">THE TEAMS</p>
+          <h2>Three teams, three seats each.</h2>
+          <p className="members-teams-note">
+            Leadership guides the community, Media &amp; Design tells its story, and Events &amp;
+            Outreach brings everyone together. Profiles appear here as members publish their details.
+          </p>
+        </div>
+
+        <div className="members-teams">
+          {teams.map((team, teamIndex) => (
+            <div className="members-team" key={team.id}>
+              <div className="members-team-head">
+                <span className="members-team-index">{String(teamIndex + 1).padStart(2, "0")}</span>
+                <div>
+                  <h3>{team.name}</h3>
+                  <p>{team.tagline}</p>
+                </div>
+              </div>
+              <div className="members-team-grid">
+                {team.members.map((member, index) => (
+                  <article
+                    className={`members-team-card${member.placeholder ? " is-placeholder" : ""}`}
+                    key={`${team.id}-${index}`}
+                  >
+                    <div className="members-team-photo">
+                      {member.photo ? (
+                        <img src={member.photo} alt={member.name} loading="lazy" />
+                      ) : (
+                        <span className="members-team-avatar">
+                          {member.placeholder ? "?" : initialsFor(member.name)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="members-team-info">
+                      <span className="members-team-role">{member.role}</span>
+                      <h4>{member.name}</h4>
+                      {member.bio && <p>{member.bio}</p>}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
     </>

@@ -152,3 +152,61 @@ export const updateCategories = [
   "Opportunities",
   "Achievements",
 ] as const;
+
+/* ------------------------------------------------------------------
+   Community teams. Each team keeps three seats. Members whose profiles
+   are not published yet stay as empty frames (placeholder) so the
+   structure is ready without inventing names or details.
+   ------------------------------------------------------------------ */
+export type TeamMember = {
+  name: string;
+  role: string;
+  photo?: string;
+  bio?: string;
+  placeholder?: boolean;
+};
+
+export type Team = {
+  id: string;
+  name: string;
+  tagline: string;
+  members: TeamMember[];
+};
+
+export const teams: Team[] = [
+  {
+    id: "leadership",
+    name: "Leadership",
+    tagline: "Guiding the community forward",
+    members: [
+      {
+        name: "Ayush Kumar",
+        role: "Student Builder Group Leader",
+        photo: "/assets/ayush-kumar.jpg",
+        bio: "B.Tech CSE · AI & ML · Year 2",
+      },
+      { name: "—", role: "Coming soon", placeholder: true },
+      { name: "—", role: "Coming soon", placeholder: true },
+    ],
+  },
+  {
+    id: "media",
+    name: "Media & Design",
+    tagline: "Content, design & visual storytelling",
+    members: [
+      { name: "—", role: "Coming soon", placeholder: true },
+      { name: "—", role: "Coming soon", placeholder: true },
+      { name: "—", role: "Coming soon", placeholder: true },
+    ],
+  },
+  {
+    id: "events",
+    name: "Events & Outreach",
+    tagline: "Workshops, meetups & community building",
+    members: [
+      { name: "—", role: "Coming soon", placeholder: true },
+      { name: "—", role: "Coming soon", placeholder: true },
+      { name: "—", role: "Coming soon", placeholder: true },
+    ],
+  },
+];

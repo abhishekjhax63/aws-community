@@ -18,22 +18,25 @@ import {
  * copy of the source image — nothing is invented.
  *
  * Scroll timeline (the section is 200vh with a sticky stage, so the animation is
- * driven entirely by real scroll progress — never autoplay). The three phases
- * never overlap, so the copy can only appear once the mark has fully locked:
- *   0.00 → 0.52  the four pieces fly in from the corners and lock together
- *   0.52 → 0.68  the backdrop plate appears BEHIND the assembled logo
- *   0.70 → 0.90  the brand reveal copy fades up, in its own layout container
- * Nothing sits behind the pieces while they are still in flight.
+ * driven entirely by real scroll progress — never autoplay). The phases never
+ * overlap, so the copy can only appear once the mark has fully locked:
+ *   0.00 → 0.52  the four pieces blast in from the corners, each spinning the
+ *                whole way and locking one after another (a staggered click)
+ *   0.52 → 0.68  the backdrop plate snaps in BEHIND the assembled logo
+ *   0.54 → 0.72  a light sweep rakes across the locked mark
+ *   0.70 → 0.90  the brand reveal copy rises into place
+ * A scale kick on the whole mark fires at the final lock so the assembly lands
+ * with an impact rather than drifting to a stop.
  */
 const ASSEMBLE_END = 0.52;
 const PLATE_END = 0.68;
 const COPY_START = 0.7;
 
 const PIECES = [
-  { key: "tl", dx: -1, dy: -1, rot: -15 },
-  { key: "tr", dx: 1, dy: -1, rot: 15 },
-  { key: "bl", dx: -1, dy: 1, rot: 15 },
-  { key: "br", dx: 1, dy: 1, rot: -15 },
+  { key: "tl", dx: -1, dy: -1, spin: -250 },
+  { key: "tr", dx: 1, dy: -1, spin: 210 },
+  { key: "bl", dx: -1, dy: 1, spin: 280 },
+  { key: "br", dx: 1, dy: 1, spin: -190 },
 ] as const;
 
 function LogoPiece({
@@ -41,28 +44,50 @@ function LogoPiece({
   pieceKey,
   dx,
   dy,
-  rot,
+  spin,
+  index,
 }: {
   progress: MotionValue<number>;
   pieceKey: string;
   dx: number;
   dy: number;
-  rot: number;
+  spin: number;
+  index: number;
 }) {
-  const x = useTransform(progress, [0, ASSEMBLE_END], [`${dx * 260}%`, "0%"]);
-  const y = useTransform(progress, [0, ASSEMBLE_END], [`${dy * 190}%`, "0%"]);
-  const rotate = useTransform(progress, [0, ASSEMBLE_END], [rot, 0]);
-  const scale = useTransform(progress, [0, ASSEMBLE_END], [0.7, 1]);
-  const opacity = useTransform(progress, [0, 0.06], [0, 1]);
-  // A soft depth shadow while a tile is still in flight; it fades to nothing at
-  // the exact moment the piece locks in, so the assembled logo has no seam.
-  const depth = useTransform(progress, [0, 0.4, ASSEMBLE_END], [1, 0.4, 0]);
-  const boxShadow = useTransform(depth, (v) => `0 18px 40px rgba(0,0,0,${(0.38 * v).toFixed(3)})`);
+  // Each piece locks a touch earlier than the next, so they land like a
+  // four-beat "click" instead of a single soft settle.
+  const end = ASSEMBLE_END - (PIECES.length - 1 - index) * 0.045;
+  const x = useTransform(progress, [0, end], [`${dx * 340}%`, "0%"]);
+  const y = useTransform(progress, [0, end], [`${dy * 260}%`, "0%"]);
+  // Spin the full way in, overshoot just past zero, then settle — a snappy
+  // whip-crack landing.
+  const rotate = useTransform(
+    progress,
+    [0, end * 0.84, end],
+    [spin, -Math.sign(spin) * 14, 0],
+  );
+  const scale = useTransform(progress, [0, end * 0.86, end], [0.3, 1.16, 1]);
+  // Depth: pieces rush forward from behind the plane as they arrive.
+  const z = useTransform(progress, [0, end], [-260, 0]);
+  const opacity = useTransform(progress, [0, 0.05], [0, 1]);
+  // A heavier shadow while a tile is still in flight; it fades to nothing at the
+  // exact moment the piece locks in, so the assembled logo has no seam.
+  const depth = useTransform(progress, [0, end * 0.7, end], [1, 0.45, 0]);
+  const boxShadow = useTransform(depth, (v) => `0 28px 64px rgba(0,0,0,${(0.44 * v).toFixed(3)})`);
 
   return (
     <motion.div
       className={`logo-piece logo-piece-${pieceKey}`}
-      style={{ x, y, rotate, scale, opacity, boxShadow }}
+      style={{
+        x,
+        y,
+        z,
+        rotate,
+        scale,
+        opacity,
+        boxShadow,
+        transformPerspective: 900,
+      }}
       aria-hidden="true"
     />
   );
@@ -87,10 +112,29 @@ export default function LogoAssembly() {
     mass: 0.35,
   });
 
-  // Separate backdrop layer — appears ONLY after the four pieces have locked,
-  // and fully settles before the copy starts to reveal.
-  const plateOpacity = useTransform(progress, [ASSEMBLE_END, ASSEMBLE_END + 0.12], [0, 1]);
-  const plateScale = useTransform(progress, [ASSEMBLE_END, PLATE_END], [0.84, 1]);
+  // The whole mark kicks outward on the final lock so the assembly hits.
+  const markScale = useTransform(
+    progress,
+    [ASSEMBLE_END - 0.06, ASSEMBLE_END, ASSEMBLE_END + 0.06],
+    [1, 1.05, 1],
+  );
+
+  // Backdrop layer — snaps in ONLY after the four pieces have locked.
+  const plateOpacity = useTransform(progress, [ASSEMBLE_END, ASSEMBLE_END + 0.1], [0, 1]);
+  const plateScale = useTransform(progress, [ASSEMBLE_END, PLATE_END], [0.78, 1]);
+  const plateRotate = useTransform(progress, [ASSEMBLE_END, PLATE_END], [-5, 0]);
+
+  // The glow swells into a burst as the pieces slam home, then eases back.
+  const glowOpacity = useTransform(
+    progress,
+    [0, 0.34, ASSEMBLE_END, PLATE_END],
+    [0, 0.4, 1, 0.72],
+  );
+  const glowScale = useTransform(progress, [0.34, ASSEMBLE_END, PLATE_END], [0.7, 1.5, 1]);
+
+  // A light sweep rakes across the mark right after it locks.
+  const sweepX = useTransform(progress, [0.54, 0.72], ["-110%", "270%"]);
+  const sweepOpacity = useTransform(progress, [0.54, 0.58, 0.7, 0.72], [0, 0.95, 0.95, 0]);
 
   const eyebrowOpacity = useTransform(progress, [0, 0.1], [0, 1]);
 
@@ -115,14 +159,21 @@ export default function LogoAssembly() {
           <span className="logo-stage-hint">SCROLL TO ASSEMBLE</span>
         </motion.div>
 
-        <div className="logo-mark">
-          <div className="logo-glow" aria-hidden="true" />
+        <motion.div
+          className="logo-mark"
+          style={reduce ? undefined : { scale: markScale }}
+        >
+          <motion.div
+            className="logo-glow"
+            aria-hidden="true"
+            style={reduce ? undefined : { opacity: glowOpacity, scale: glowScale }}
+          />
           <motion.div
             className="logo-plate"
             aria-hidden="true"
-            style={reduce ? undefined : { opacity: plateOpacity, scale: plateScale }}
+            style={reduce ? undefined : { opacity: plateOpacity, scale: plateScale, rotate: plateRotate }}
           />
-          {PIECES.map((piece) =>
+          {PIECES.map((piece, index) =>
             reduce ? (
               <div
                 key={piece.key}
@@ -136,12 +187,19 @@ export default function LogoAssembly() {
                 pieceKey={piece.key}
                 dx={piece.dx}
                 dy={piece.dy}
-                rot={piece.rot}
+                spin={piece.spin}
+                index={index}
               />
             ),
           )}
+          <div className="logo-sweep-clip" aria-hidden="true">
+            <motion.div
+              className="logo-sweep"
+              style={reduce ? { opacity: 0 } : { x: sweepX, opacity: sweepOpacity }}
+            />
+          </div>
           <span className="logo-sr-label">AWS Builder Community — Amity University Patna</span>
-        </div>
+        </motion.div>
 
         <div className="logo-words">
           <motion.h2 style={reduce ? undefined : { opacity: lineOneOpacity, y: lineOneY }}>
