@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { ArrowRight, ArrowUpRight, BookOpen, Check, GraduationCap } from "lucide-react";
-import CloudArchitectureAssembly from "../components/CloudArchitectureAssembly";
 import { PageHero } from "../components/Page";
 import Reveal from "../components/Reveal";
 import { learningLevels, learningPaths } from "../data/content";
@@ -98,8 +97,6 @@ export default function Learning() {
           Community participation does not grant AWS certification.
         </p>
       </section>
-
-      <CloudArchitectureAssembly />
     </>
   );
 }

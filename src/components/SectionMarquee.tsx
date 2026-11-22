@@ -1,41 +1,48 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
+import { Pause, Play } from "lucide-react";
 
 const DEFAULT_PHRASES = [
-  "AWS BUILDER COMMUNITY",
   "LEARN CLOUD",
-  "BUILD BEYOND",
-  "INNOVATE TOGETHER",
+  "BUILD TOGETHER",
+  "INNOVATE",
+  "CONNECT",
+  "CREATE",
 ];
 
 /**
- * A single-line ticker band that keeps its text moving between sections.
- * The phrase list is rendered twice so the marquee loops seamlessly
- * (the track slides by exactly one copy). Motion is purely transform
- * based and is disabled for users who prefer reduced motion via CSS.
+ * Compact editorial ticker. Its repeated phrase group makes the transform
+ * loop seamless; the visible pause control and reduced-motion rule keep it
+ * comfortable to read.
  */
-export default function SectionMarquee({
-  phrases = DEFAULT_PHRASES,
-  tone = "dark",
-  speed = 32,
-}: {
-  phrases?: string[];
-  tone?: "light" | "dark";
-  speed?: number;
-}) {
+export default function SectionMarquee() {
+  const [paused, setPaused] = useState(false);
+
   return (
-    <div className={`section-marquee ${tone}`} aria-hidden="true">
-      <div className="section-marquee-track" style={{ animationDuration: `${speed}s` }}>
+    <div className="section-marquee" role="group" aria-label="Community focus">
+      <div
+        className={`section-marquee-track${paused ? " is-paused" : ""}`}
+        aria-hidden="true"
+      >
         {[0, 1].map((copy) => (
           <span className="section-marquee-group" key={copy}>
-            {phrases.map((phrase, i) => (
+            {DEFAULT_PHRASES.map((phrase, i) => (
               <Fragment key={i}>
                 <span className="section-marquee-text">{phrase}</span>
-                <span className="section-marquee-dot">✦</span>
+                <span className="section-marquee-dot" />
               </Fragment>
             ))}
           </span>
         ))}
       </div>
+      <button
+        className="section-marquee-toggle"
+        type="button"
+        aria-label={paused ? "Resume ticker animation" : "Pause ticker animation"}
+        aria-pressed={paused}
+        onClick={() => setPaused((value) => !value)}
+      >
+        {paused ? <Play size={12} /> : <Pause size={12} />}
+      </button>
     </div>
   );
 }

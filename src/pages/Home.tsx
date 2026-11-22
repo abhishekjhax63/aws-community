@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowDownRight,
@@ -12,6 +12,7 @@ import {
 import Reveal from "../components/Reveal";
 import TextReveal from "../components/TextReveal";
 import StatNumber from "../components/StatNumber";
+import CloudArchitectureAssembly from "../components/CloudArchitectureAssembly";
 import LogoAssembly from "../components/LogoAssembly";
 import PhotoSlideshow from "../components/PhotoSlideshow";
 import SectionMarquee from "../components/SectionMarquee";
@@ -53,44 +54,6 @@ function CountdownPill({ target }: { target: string }) {
 
 export default function Home() {
   useDocumentTitle();
-  const heroRef = useRef<HTMLElement | null>(null);
-
-  // Subtle mouse-driven parallax on the hero visual (desktop pointers only).
-  useEffect(() => {
-    const hero = heroRef.current;
-    if (!hero) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    if (!window.matchMedia("(hover: hover) and (min-width: 900px)").matches) return;
-
-    let frame = 0;
-    let rx = 0;
-    let ry = 0;
-    const apply = () => {
-      frame = 0;
-      hero.style.setProperty("--hero-rx", `${rx.toFixed(3)}deg`);
-      hero.style.setProperty("--hero-ry", `${ry.toFixed(3)}deg`);
-    };
-    const onMove = (event: PointerEvent) => {
-      const rect = hero.getBoundingClientRect();
-      const nx = (event.clientX - rect.left) / rect.width - 0.5;
-      const ny = (event.clientY - rect.top) / rect.height - 0.5;
-      ry = nx * 7;
-      rx = ny * -5;
-      if (!frame) frame = requestAnimationFrame(apply);
-    };
-    const onLeave = () => {
-      rx = 0;
-      ry = 0;
-      if (!frame) frame = requestAnimationFrame(apply);
-    };
-    hero.addEventListener("pointermove", onMove);
-    hero.addEventListener("pointerleave", onLeave);
-    return () => {
-      hero.removeEventListener("pointermove", onMove);
-      hero.removeEventListener("pointerleave", onLeave);
-      cancelAnimationFrame(frame);
-    };
-  }, []);
 
   const { data, loading } = useAsync<HomeData>(async (signal) => {
     const [stats, events, members, announcements, gallery] = await Promise.all([
@@ -126,37 +89,10 @@ export default function Home() {
 
   return (
     <>
-      <section className="hero" id="home" ref={heroRef}>
-        <div className="floating-dots" aria-hidden="true">
-          <span style={{ top: "15%", left: "5%", animationDelay: "0s" }} />
-          <span style={{ top: "25%", right: "8%", animationDelay: "2s" }} />
-          <span style={{ bottom: "30%", left: "12%", animationDelay: "4s" }} />
-          <span style={{ top: "55%", right: "15%", animationDelay: "1s" }} />
-          <span style={{ bottom: "20%", right: "30%", animationDelay: "3s" }} />
-        </div>
-        <div className="hero-watermark" aria-hidden="true">
-          <span className="hero-watermark-word hero-watermark-word-first" data-watermark="BUILDER">
-            BUILDER
-          </span>
-          <span className="hero-watermark-word hero-watermark-word-second" data-watermark="COMMUNITY">
-            COMMUNITY
-          </span>
-        </div>
-        <div className="hero-topline">
-          <span className="hero-status" aria-label="Student-led and builder-focused">
-            <span className="live-dot" aria-hidden="true" />
-            <span className="hero-status-student">STUDENT-LED</span>
-            <span className="hero-status-divider" aria-hidden="true">/</span>
-            <span className="hero-status-builder">BUILDER-FOCUSED</span>
-          </span>
-          <span className="hero-location">
-            <MapPin size={13} /> PATNA, INDIA
-          </span>
-        </div>
+      <section className="hero" id="home">
         <div className="hero-content">
           <div className="hero-copy">
             <p className="eyebrow light-eyebrow">AWS STUDENT BUILDER GROUP</p>
-            <p className="hero-university">AMITY UNIVERSITY PATNA</p>
             <h1>
               <TextReveal as="span" mode="word" stagger={60}>
                 Don&apos;t Just Learn
@@ -173,9 +109,8 @@ export default function Home() {
               </em>
             </h1>
             <p className="hero-intro">
-              A community of passionate student builders exploring cloud computing, artificial
-              intelligence and hands-on innovation. Learn together, collaborate on ideas and build
-              what&apos;s next.
+              A student-led community exploring cloud computing, AI and hands-on innovation. Learn
+              together, build real projects and create what&apos;s next.
             </p>
             <div className="hero-actions">
               <Link className="button button-orange" to="/auth/signup">
@@ -184,12 +119,6 @@ export default function Home() {
               <Link className="button button-secondary" to="/events">
                 Explore Events <ArrowDownRight size={16} />
               </Link>
-            </div>
-            <div className="hero-coordinates">
-              <span>25°31&apos; N</span>
-              <span className="coordinate-line" />
-              <span>85°08&apos; E</span>
-              <span className="coordinate-place">AMITY UNIVERSITY PATNA</span>
             </div>
           </div>
           <div className="hero-art" aria-label="Community event photographs">
@@ -201,27 +130,14 @@ export default function Home() {
             />
           </div>
         </div>
-        <a className="hero-scroll" href="#community-gallery">
-          <span>SCROLL TO EXPLORE</span>
-          <ArrowDownRight size={15} />
-        </a>
-        <div className="hero-side-label">LEARN CLOUD. BUILD BEYOND. INNOVATE TOGETHER.</div>
       </section>
 
-      <SectionMarquee
-        tone="light"
-        phrases={["LEARN CLOUD", "BUILD TOGETHER", "CREATE THE FUTURE"]}
-        speed={28}
-      />
+      <SectionMarquee />
+
+      <CloudArchitectureAssembly />
 
       {/* Signature: scroll-driven four-piece logo assembly */}
       <LogoAssembly />
-
-      <SectionMarquee
-        tone="dark"
-        phrases={["THE COMMUNITY MARK", "REAL PEOPLE", "REAL BUILDS"]}
-        speed={28}
-      />
 
       {/* Photo-only cinematic journal band */}
       <section
@@ -242,8 +158,6 @@ export default function Home() {
           <PhotoSlideshow variant="cinema" photos={photos} ariaLabel="Community event photographs" />
         </div>
       </section>
-
-      <SectionMarquee tone="dark" />
 
       {/* B. Upcoming featured event */}
       <section className="feature-section section-pad bg-grid">
@@ -342,8 +256,6 @@ export default function Home() {
         )}
       </section>
 
-      <SectionMarquee tone="light" />
-
       {/* C. Meet the builders */}
       <section className="leader-section section-pad">
         <div className="section-index section-index-light">
@@ -382,7 +294,6 @@ export default function Home() {
               alt="Ayush Kumar, AWS Student Builder Group Leader"
               loading="lazy"
             />
-            <span className="photo-caption">CAMPUS BUILDER / 001</span>
           </div>
           </Reveal>
           <div className="leader-details">
@@ -472,8 +383,6 @@ export default function Home() {
         </div>
       </section>
 
-      <SectionMarquee tone="dark" />
-
       {/* D. Community highlights */}
       <section className="highlights-section section-pad bg-grid">
         <div className="section-index">
@@ -503,8 +412,6 @@ export default function Home() {
           <p>Published community records only. Counts will appear as records are added.</p>
         </div>
       </section>
-
-      <SectionMarquee tone="dark" />
 
       {/* E. Latest updates */}
       <section className="updates-section section-pad">
@@ -566,8 +473,6 @@ export default function Home() {
         )}
       </section>
 
-      <SectionMarquee tone="light" />
-
       {/* G. Student suggestion box */}
       <section className="suggestion-section section-pad bg-grid">
         <div className="section-index">
@@ -607,8 +512,6 @@ export default function Home() {
           </Reveal>
         </div>
       </section>
-
-      <SectionMarquee tone="light" />
 
       {/* H. Join community CTA */}
       <section className="final-banner">

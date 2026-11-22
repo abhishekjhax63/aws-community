@@ -4,7 +4,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
@@ -65,14 +64,6 @@ const PHRASES: Phrase[] = [
 type LayoutKey = "a" | "b" | "c" | "d";
 const LAYOUTS: LayoutKey[] = ["a", "b", "c", "d"];
 
-/** Angular corner cuts for the hero plate, rotated so no edge ever repeats. */
-const HERO_CLIPS = [
-  "polygon(0 0, 100% 0, 100% 76%, 82% 100%, 0 100%)",
-  "polygon(18% 0, 100% 0, 100% 100%, 0 100%, 0 26%)",
-  "polygon(0 0, 82% 0, 100% 22%, 100% 100%, 0 100%)",
-  "polygon(0 0, 100% 0, 100% 100%, 20% 100%, 0 78%)",
-];
-
 const pad = (n: number) => String(n).padStart(2, "0");
 
 type SlideSpec = {
@@ -116,7 +107,7 @@ function CompositionA({
 }: CompositionProps) {
   return (
     <article className={`ed-slide ed-slide--a ${active ? "is-active" : ""}`} aria-hidden={!active}>
-      <div className="ed-cell ed-cell--text" data-reveal="up">
+      <div className="ed-cell ed-cell--text">
         <EdText phrase={spec.phrase} num={pad(index + 1)} />
       </div>
       <div className="ed-cell ed-cell--a-media">
@@ -140,7 +131,7 @@ function CompositionB({
 }: CompositionProps) {
   return (
     <article className={`ed-slide ed-slide--b ${active ? "is-active" : ""}`} aria-hidden={!active}>
-      <div className="ed-cell ed-cell--text" data-reveal="up">
+      <div className="ed-cell ed-cell--text">
         <EdText phrase={spec.phrase} num={pad(index + 1)} />
       </div>
       <div className="ed-cell ed-cell--b-media">
@@ -166,12 +157,12 @@ function CompositionC({
   return (
     <article className={`ed-slide ed-slide--c ${active ? "is-active" : ""}`} aria-hidden={!active}>
       <div className="ed-cell ed-cell--c-media">
-        <div className="ed-arch" data-reveal="up">
+        <div className="ed-arch">
           {panel(spec.main, "ed-panel--c", undefined, 0, true)}
           <span className="ed-arch-tick" aria-hidden="true" />
         </div>
       </div>
-      <div className="ed-cell ed-cell--text" data-reveal="up" style={{ "--d": "200ms" } as CSSProperties}>
+      <div className="ed-cell ed-cell--text">
         <EdText phrase={spec.phrase} num={pad(index + 1)} />
       </div>
     </article>
@@ -190,7 +181,7 @@ function CompositionD({
 }: CompositionProps) {
   return (
     <article className={`ed-slide ed-slide--d ${active ? "is-active" : ""}`} aria-hidden={!active}>
-      <div className="ed-cell ed-cell--text" data-reveal="up">
+      <div className="ed-cell ed-cell--text">
         <EdText phrase={spec.phrase} num={pad(index + 1)} />
         <span className="ed-accent ed-accent--d" aria-hidden="true" />
       </div>
@@ -268,7 +259,6 @@ export default function PhotoSlideshow({
 
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [loaded, setLoaded] = useState<Record<string, boolean>>({});
   const startX = useRef<number | null>(null);
 
   const go = useCallback(
@@ -278,10 +268,6 @@ export default function PhotoSlideshow({
     },
     [count],
   );
-
-  const markLoaded = useCallback((src: string) => {
-    setLoaded((prev) => (prev[src] ? prev : { ...prev, [src]: true }));
-  }, []);
 
   // Automatic advance. Cleared and restarted on every change so manual
   // navigation also resets the timer.
@@ -336,7 +322,7 @@ export default function PhotoSlideshow({
     );
   }
 
-  const panel: PanelFactory = (photo, className, reveal, delay = 0, wipe = false) => {
+  const panel: PanelFactory = (photo, className, _reveal, _delay = 0, wipe = false) => {
     const img = (
       <img
         src={photo.src}
@@ -344,20 +330,9 @@ export default function PhotoSlideshow({
         loading={index === 0 ? "eager" : "lazy"}
         decoding="async"
         draggable={false}
-        onLoad={() => markLoaded(photo.src)}
-        onError={() => markLoaded(photo.src)}
       />
     );
-    return (
-      <div
-        className={`ed-panel ${className}`}
-        data-reveal={reveal}
-        style={reveal ? ({ "--d": `${delay}ms` } as CSSProperties) : undefined}
-      >
-        {!loaded[photo.src] && <span className="ed-shimmer" aria-hidden="true" />}
-        {wipe ? <span className="ed-wipe">{img}</span> : img}
-      </div>
-    );
+    return <div className={`ed-panel ${className}`}>{wipe ? <span className="ed-wipe">{img}</span> : img}</div>;
   };
 
   const compositionProps = (spec: SlideSpec, i: number) => ({
@@ -383,30 +358,19 @@ export default function PhotoSlideshow({
     >
       <div className="photo-stage">
         {isHero
-          ? photos.map((photo, i) => (
-              <div
-                key={photo.src}
-                className={`ed-slide ed-slide--hero ${i === index ? "is-active" : ""}`}
-                aria-hidden={i !== index}
-              >
-                <div
-                  className="ed-panel ed-panel--hero"
-                  data-reveal="scale"
-                  style={{ clipPath: HERO_CLIPS[i % HERO_CLIPS.length] } as CSSProperties}
-                >
-                  {!loaded[photo.src] && <span className="ed-shimmer" aria-hidden="true" />}
+          ? (
+              <div key={photos[index].src} className="ed-slide ed-slide--hero is-active">
+                <div className="ed-panel ed-panel--hero">
                   <img
-                    src={photo.src}
-                    alt={photo.alt ?? ""}
-                    loading={i === 0 ? "eager" : "lazy"}
+                    src={photos[index].src}
+                    alt={photos[index].alt ?? ""}
+                    loading={index === 0 ? "eager" : "lazy"}
                     decoding="async"
                     draggable={false}
-                    onLoad={() => markLoaded(photo.src)}
-                    onError={() => markLoaded(photo.src)}
                   />
                 </div>
               </div>
-            ))
+            )
           : slides.map((spec, i) => {
               const props = compositionProps(spec, i);
               const key = `${spec.main.src}-${i}`;

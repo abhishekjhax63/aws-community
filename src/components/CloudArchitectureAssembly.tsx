@@ -1,10 +1,24 @@
-import { useEffect, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  AppWindow,
+  ArrowRight,
+  Database,
+  Mail,
+  Monitor,
+  Network,
+  Pause,
+  Play,
+  Server,
+  ShieldCheck,
+  Smartphone,
+  type LucideIcon,
+} from "lucide-react";
 import {
   motion,
   useAnimationFrame,
   useInView,
   useMotionValue,
-  useMotionValueEvent,
   useReducedMotion,
   useScroll,
   useSpring,
@@ -12,472 +26,527 @@ import {
   type MotionValue,
 } from "framer-motion";
 
-/* ------------------------------------------------------------------
-   SIGNATURE CLOUD ARCHITECTURE ASSEMBLY
-   An original, educational visualization — compute, object storage,
-   database, networking and serverless modules assembling into a cloud
-   architecture. Nothing here implies an official AWS mark: every node
-   is an original geometric illustration built from the site's own
-   palette. The scene is driven entirely by scroll progress (no autoplay,
-   no scroll hijacking, no pinned whitespace beyond the track itself) and
-   falls back to the completed architecture when reduced motion is asked
-   for or on small screens.
-   ------------------------------------------------------------------ */
+type EcosystemServiceId =
+  | "ec2"
+  | "vpc"
+  | "s3"
+  | "workspaces"
+  | "amplify"
+  | "ses"
+  | "iam"
+  | "appsync";
 
-const VIEW_W = 1000;
-const VIEW_H = 640;
-/** Cloud core centre, in viewBox units. */
-const CORE = { x: 500, y: 250 };
-
-type ServiceId = "ec2" | "s3" | "rds" | "vpc" | "lambda";
-
-type Service = {
-  id: ServiceId;
+type EcosystemService = {
+  id: EcosystemServiceId;
   name: string;
-  role: string;
+  category: string;
   detail: string;
-  /** Final slot centre, in viewBox units. */
+  Icon: LucideIcon;
   x: number;
   y: number;
-  /** Entry offset before assembly, in viewBox units. */
-  ox: number;
-  oy: number;
+  dx: number;
+  dy: number;
+  rotation: number;
 };
 
-const SERVICES: Service[] = [
+const ECOSYSTEM_SERVICES: EcosystemService[] = [
   {
     id: "ec2",
     name: "Amazon EC2",
-    role: "Virtual compute capacity",
-    detail:
-      "Resizable virtual servers in the cloud. Choose an instance type, launch it and scale capacity up or down as demand changes.",
-    x: 150,
-    y: 126,
-    ox: -96,
-    oy: -74,
+    category: "Servers / Compute",
+    detail: "Resizable virtual compute capacity for workloads that need control over their servers.",
+    Icon: Server,
+    x: 560,
+    y: 76,
+    dx: 0,
+    dy: -18,
+    rotation: -2,
   },
   {
     id: "vpc",
     name: "Amazon VPC",
-    role: "Isolated virtual networking",
-    detail:
-      "A logically isolated network where you define subnets, route tables and gateways so your cloud resources talk to each other safely.",
-    x: 850,
-    y: 118,
-    ox: 96,
-    oy: -74,
+    category: "Networking",
+    detail: "An isolated virtual network where you define how cloud resources connect.",
+    Icon: Network,
+    x: 810,
+    y: 166,
+    dx: 16,
+    dy: -12,
+    rotation: 2,
   },
   {
     id: "s3",
     name: "Amazon S3",
-    role: "Scalable object storage",
-    detail:
-      "Durable object storage for any amount of data — images, backups, logs or static sites — served straight from the cloud.",
-    x: 122,
-    y: 448,
-    ox: -96,
-    oy: 74,
+    category: "Storage",
+    detail: "Scalable object storage for data, backups, media and application assets.",
+    Icon: Database,
+    x: 1015,
+    y: 380,
+    dx: 22,
+    dy: 0,
+    rotation: 2,
   },
   {
-    id: "lambda",
-    name: "AWS Lambda",
-    role: "Event-driven serverless computing",
-    detail:
-      "Run code in response to events without managing servers. You pay only for the compute time your function actually uses.",
-    x: 878,
-    y: 438,
-    ox: 96,
-    oy: 74,
+    id: "workspaces",
+    name: "Amazon WorkSpaces",
+    category: "Remote Computing",
+    detail: "Managed virtual desktops that users can access from supported devices.",
+    Icon: Monitor,
+    x: 810,
+    y: 594,
+    dx: 16,
+    dy: 12,
+    rotation: 2,
   },
   {
-    id: "rds",
-    name: "Amazon RDS",
-    role: "Managed relational databases",
-    detail:
-      "Managed relational databases with automated backups, patching and scaling so your team can focus on the application.",
-    x: 500,
-    y: 578,
-    ox: 0,
-    oy: 96,
+    id: "amplify",
+    name: "AWS Amplify",
+    category: "Mobile",
+    detail: "Tools for building, deploying and hosting web and mobile applications.",
+    Icon: Smartphone,
+    x: 560,
+    y: 684,
+    dx: 0,
+    dy: 18,
+    rotation: 2,
+  },
+  {
+    id: "ses",
+    name: "Amazon SES",
+    category: "Email",
+    detail: "A cloud email service for sending and receiving application messages.",
+    Icon: Mail,
+    x: 310,
+    y: 594,
+    dx: -16,
+    dy: 12,
+    rotation: -2,
+  },
+  {
+    id: "iam",
+    name: "AWS IAM",
+    category: "Security",
+    detail: "Manage identities and permissions that control access to AWS resources.",
+    Icon: ShieldCheck,
+    x: 105,
+    y: 380,
+    dx: -22,
+    dy: 0,
+    rotation: -2,
+  },
+  {
+    id: "appsync",
+    name: "AWS AppSync",
+    category: "Mobile Development",
+    detail: "Build application APIs with managed GraphQL and real-time data features.",
+    Icon: AppWindow,
+    x: 310,
+    y: 166,
+    dx: -16,
+    dy: -12,
+    rotation: -2,
   },
 ];
 
-/** The four cloud pieces, each with the offset and tilt it enters from. */
-const CLOUD_PARTS = [
-  { key: "base", ox: -24, oy: 46, rot: -7, cls: "cloud-part--base" },
-  { key: "left", ox: -62, oy: -22, rot: -16, cls: "cloud-part--left" },
-  { key: "right", ox: 64, oy: -30, rot: 15, cls: "cloud-part--right" },
-  { key: "top", ox: 8, oy: -68, rot: 12, cls: "cloud-part--top" },
-] as const;
+const ECOSYSTEM_VIEW = { width: 1120, height: 760 };
+const ECOSYSTEM_CENTER = { x: 560, y: 380 };
 
-/** Three architectural platforms under the cloud. */
-const PLATFORMS = [
-  { y: 392, w: 268 },
-  { y: 424, w: 356 },
-  { y: 456, w: 444 },
-] as const;
+function getConnection(service: EcosystemService) {
+  const vx = service.x - ECOSYSTEM_CENTER.x;
+  const vy = service.y - ECOSYSTEM_CENTER.y;
+  const length = Math.hypot(vx, vy) || 1;
+  const ux = vx / length;
+  const uy = vy / length;
+  const centralRadius = 1 / Math.sqrt((ux * ux) / (205 * 205) + (uy * uy) / (145 * 145));
+  const serviceRadius = 1 / Math.sqrt((ux * ux) / (100 * 100) + (uy * uy) / (56 * 56));
+  const from = {
+    x: ECOSYSTEM_CENTER.x + ux * centralRadius,
+    y: ECOSYSTEM_CENTER.y + uy * centralRadius,
+  };
+  const to = { x: service.x - ux * serviceRadius, y: service.y - uy * serviceRadius };
+  const bend = (service.id === "vpc" || service.id === "workspaces" || service.id === "ses" || service.id === "appsync") ? 13 : 0;
+  const mid = {
+    x: (from.x + to.x) / 2 - uy * bend,
+    y: (from.y + to.y) / 2 + ux * bend,
+  };
 
-const STAGES = [
-  { at: 0.0, label: "STAGE 01", title: "DISASSEMBLED INFRASTRUCTURE" },
-  { at: 0.1, label: "STAGE 02", title: "CLOUD ASSEMBLY" },
-  { at: 0.42, label: "STAGE 03", title: "SERVICE MODULE ASSEMBLY" },
-  { at: 0.64, label: "STAGE 04", title: "NETWORK ACTIVATION" },
-  { at: 0.86, label: "STAGE 05", title: "FINAL CLOUD ARCHITECTURE" },
-] as const;
+  return {
+    from,
+    to,
+    mid,
+    path: `M ${from.x} ${from.y} Q ${mid.x} ${mid.y} ${to.x} ${to.y}`,
+  };
+}
 
-/* Timeline — every value is a fraction of the section's scroll progress. */
-const CLOUD: [number, number] = [0.08, 0.36];
-const PLATFORM: [number, number] = [0.3, 0.47];
-const MODULE: [number, number] = [0.44, 0.68];
-const WIRE: [number, number] = [0.66, 0.87];
-const FINAL: [number, number] = [0.86, 0.98];
-const PACKET_GATE: [number, number] = [0.7, 0.82];
+function EcosystemCore({
+  progress,
+  gradientPrefix,
+  className = "",
+}: {
+  progress: MotionValue<number>;
+  gradientPrefix: string;
+  className?: string;
+}) {
+  const x = useTransform(progress, [0, 0.52], [0, 0]);
+  const y = useTransform(progress, [0, 0.52], [14, 0]);
+  const scale = useTransform(progress, [0, 0.52], [0.97, 1]);
+  const rotate = useTransform(progress, [0, 0.52], [-1.2, 0]);
+  const shineX = useTransform(progress, [0, 0.52], [-8, 0]);
 
-const pct = (value: number, total: number) => `${(value / total) * 100}%`;
-
-function Glyph({ id }: { id: ServiceId }) {
-  const common = { fill: "none", stroke: "currentColor", strokeWidth: 1.6 } as const;
-  if (id === "ec2") {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <rect x="6" y="6" width="12" height="12" rx="1.5" {...common} />
-        <rect x="9.5" y="9.5" width="5" height="5" rx="1" {...common} />
-        <path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3" {...common} />
-      </svg>
-    );
-  }
-  if (id === "s3") {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 7.5 12 4l8 3.5-8 3.5-8-3.5Z" {...common} />
-        <path d="M4 12l8 3.5 8-3.5" {...common} />
-        <path d="M4 16.5 12 20l8-3.5" {...common} />
-      </svg>
-    );
-  }
-  if (id === "rds") {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <ellipse cx="12" cy="6" rx="7" ry="3" {...common} />
-        <path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6" {...common} />
-        <path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3" {...common} />
-      </svg>
-    );
-  }
-  if (id === "vpc") {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="5" r="2.4" {...common} />
-        <circle cx="5" cy="18" r="2.4" {...common} />
-        <circle cx="19" cy="18" r="2.4" {...common} />
-        <path d="M10.4 7 6.6 15.7M13.6 7l3.8 8.7M7.4 18h9.2" {...common} />
-      </svg>
-    );
-  }
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M13.4 3 6 13.2h4.6L9.9 21l7.4-10.2h-4.6L13.4 3Z" {...common} />
+    <div className={`ecosystem-core-position ${className}`}>
+      <motion.div className="ecosystem-core" style={{ x, y, scale, rotate }}>
+        <svg viewBox="0 0 440 280" role="img" aria-labelledby={`${gradientPrefix}-title`}>
+          <title id={`${gradientPrefix}-title`}>Cloud infrastructure connected to AWS service examples</title>
+          <defs>
+            <linearGradient id={`${gradientPrefix}-fill`} x1="0" y1="0" x2="0.2" y2="1">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="62%" stopColor="#e8edf3" />
+              <stop offset="100%" stopColor="#cbd5e1" />
+            </linearGradient>
+            <linearGradient id={`${gradientPrefix}-shine`} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+              <stop offset="65%" stopColor="#ffffff" stopOpacity="0.14" />
+              <stop offset="100%" stopColor="#94a3b8" stopOpacity="0.16" />
+            </linearGradient>
+            <clipPath id={`${gradientPrefix}-clip`}>
+              <path d="M111 225C66 225 38 197 38 160c0-34 25-63 61-68 9-42 46-70 91-70 39 0 72 22 86 55 13-10 28-15 45-15 41 0 74 32 75 73 33 7 54 31 54 61 0 31-25 53-61 53H111Z" />
+            </clipPath>
+            <filter id={`${gradientPrefix}-shadow`} x="-20%" y="-25%" width="140%" height="160%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="7" />
+              <feOffset dy="9" />
+              <feComponentTransfer>
+                <feFuncA type="linear" slope="0.22" />
+              </feComponentTransfer>
+              <feMerge>
+                <feMergeNode />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          <path
+            className="ecosystem-core-shadow"
+            d="M111 225C66 225 38 197 38 160c0-34 25-63 61-68 9-42 46-70 91-70 39 0 72 22 86 55 13-10 28-15 45-15 41 0 74 32 75 73 33 7 54 31 54 61 0 31-25 53-61 53H111Z"
+            fill={`url(#${gradientPrefix}-fill)`}
+            stroke="#ff9900"
+            strokeWidth="7"
+            filter={`url(#${gradientPrefix}-shadow)`}
+          />
+          <g clipPath={`url(#${gradientPrefix}-clip)`}>
+            <motion.path
+              d="M104 217c-32-6-49-27-49-56 0-24 17-45 42-52 10-40 43-64 82-64 31 0 57 14 72 37-39-12-80-4-108 18-28 21-39 62-23 98 7 16 17 28 33 38-17-2-34-8-49-19Z"
+              fill={`url(#${gradientPrefix}-shine)`}
+              style={{ x: shineX }}
+            />
+            <path d="M92 208c67 25 190 30 292 0" fill="none" stroke="#ffffff" strokeOpacity="0.72" strokeWidth="3" />
+            <path d="M121 228c73 13 173 12 248-2" fill="none" stroke="#ff9900" strokeOpacity="0.8" strokeWidth="4" />
+          </g>
+          <text className="ecosystem-core-wordmark" x="220" y="145" textAnchor="middle">AWS</text>
+          <path d="M160 160h120" stroke="#ff9900" strokeWidth="3" />
+          <text className="ecosystem-core-caption" x="220" y="184" textAnchor="middle">CLOUD ECOSYSTEM</text>
+        </svg>
+      </motion.div>
+    </div>
+  );
+}
+
+function ServiceCloudShape({ id }: { id: string }) {
+  return (
+    <svg className="ecosystem-service-shape" viewBox="0 0 220 135" aria-hidden="true">
+      <defs>
+        <linearGradient id={`service-${id}-fill`} x1="0" y1="0" x2="0.2" y2="1">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="100%" stopColor="#dce4ed" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M47 119C22 119 8 104 8 84c0-19 14-34 34-37 5-25 26-40 51-40 22 0 40 12 47 31 7-6 16-9 25-9 22 0 39 17 40 39 18 4 29 16 29 31 0 13-12 22-29 22H47Z"
+        fill={`url(#service-${id}-fill)`}
+        stroke="#ff9900"
+        strokeWidth="2.5"
+      />
+      <path
+        d="M45 112c-17-4-27-14-27-29 0-13 9-23 23-27 6-20 23-31 43-31 17 0 31 7 40 20"
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth="3"
+        strokeLinecap="round"
+        opacity="0.8"
+      />
     </svg>
   );
 }
 
-/** A single cloud piece travelling into its final tile position. */
-function CloudPart({
-  progress,
-  piece,
-  index,
-}: {
-  progress: MotionValue<number>;
-  piece: (typeof CLOUD_PARTS)[number];
-  index: number;
-}) {
-  const start = CLOUD[0] + index * 0.018;
-  const end = CLOUD[1] + index * 0.012;
-  const x = useTransform(progress, [start, end], [`${piece.ox}%`, "0%"]);
-  const y = useTransform(progress, [start, end], [`${piece.oy}%`, "0%"]);
-  const rotate = useTransform(
-    progress,
-    [start, end * 0.88, end],
-    [piece.rot, -piece.rot * 0.18, 0],
-  );
-  const scale = useTransform(progress, [start, end], [0.78, 1]);
-  const opacity = useTransform(progress, [0, start], [0.7, 1]);
-
-  return (
-    <motion.span className={`cloud-part ${piece.cls}`} style={{ x, y, rotate, scale, opacity }} aria-hidden="true" />
-  );
-}
-
-/** A service module that flies into its slot and can be selected. */
-function ServiceModule({
-  progress,
+function OrbitService({
   service,
   index,
+  progress,
   selected,
   onSelect,
 }: {
-  progress: MotionValue<number>;
-  service: Service;
+  service: EcosystemService;
   index: number;
+  progress: MotionValue<number>;
   selected: boolean;
   onSelect: () => void;
 }) {
-  const start = MODULE[0] + index * 0.03;
-  const end = MODULE[1];
-  const x = useTransform(progress, [start, end], [service.ox, 0]);
-  const y = useTransform(progress, [start, end], [service.oy, 0]);
-  const opacity = useTransform(progress, [0, start], [0.65, 1]);
-  const scale = useTransform(progress, [start, end], [0.86, 1]);
+  const start = 0.06 + index * 0.025;
+  const x = useTransform(progress, [start, 0.56], [service.dx, 0]);
+  const y = useTransform(progress, [start, 0.56], [service.dy, 0]);
+  const rotate = useTransform(progress, [start, 0.56], [service.rotation, 0]);
+  const scale = useTransform(progress, [start, 0.56], [0.94, 1]);
+  const opacity = useTransform(progress, [0, start], [0.82, 1]);
+  const { Icon } = service;
 
   return (
     <div
-      className="cloud-module-slot"
-      style={{ left: pct(service.x, VIEW_W), top: pct(service.y, VIEW_H) }}
+      className="ecosystem-orbit-slot"
+      style={{ left: `${(service.x / ECOSYSTEM_VIEW.width) * 100}%`, top: `${(service.y / ECOSYSTEM_VIEW.height) * 100}%` }}
     >
       <motion.button
         type="button"
-        className={`cloud-module${selected ? " is-selected" : ""}`}
-        style={{ x, y, opacity, scale }}
+        className={`ecosystem-service${selected ? " is-selected" : ""}`}
+        style={{ x, y, rotate, scale, opacity }}
         onClick={onSelect}
+        onFocus={onSelect}
         aria-pressed={selected}
       >
-        <span className="cloud-module-icon">
-          <Glyph id={service.id} />
-        </span>
-        <span className="cloud-module-body">
-          <span className="cloud-module-name">{service.name}</span>
-          <span className="cloud-module-role">{service.role}</span>
+        <ServiceCloudShape id={service.id} />
+        <span className="ecosystem-service-content">
+          <Icon size={23} strokeWidth={1.8} aria-hidden="true" />
+          <span className="ecosystem-service-name">{service.name}</span>
+          <span className="ecosystem-service-category">{service.category}</span>
         </span>
       </motion.button>
     </div>
   );
 }
 
-/** A data packet travelling one of the activated connection paths. */
-function Packet({
+function FlowPacket({
   clock,
   from,
+  mid,
   to,
   offset,
+  reverse,
 }: {
   clock: MotionValue<number>;
   from: { x: number; y: number };
+  mid: { x: number; y: number };
   to: { x: number; y: number };
   offset: number;
+  reverse: boolean;
 }) {
-  const at = useTransform(clock, (value) => (value + offset) % 1);
-  const x = useTransform(at, [0, 1], [0, to.x - from.x]);
-  const y = useTransform(at, [0, 1], [0, to.y - from.y]);
-  const opacity = useTransform(at, [0, 0.12, 0.86, 1], [0, 1, 1, 0]);
+  const progress = useTransform(clock, (value) => {
+    const point = (value + offset) % 1;
+    return reverse ? 1 - point : point;
+  });
+  const x = useTransform(progress, (value) => {
+    const inverse = 1 - value;
+    return inverse * inverse * from.x + 2 * inverse * value * mid.x + value * value * to.x;
+  });
+  const y = useTransform(progress, (value) => {
+    const inverse = 1 - value;
+    return inverse * inverse * from.y + 2 * inverse * value * mid.y + value * value * to.y;
+  });
+
+  return <motion.circle className="ecosystem-flow-packet" cx={from.x} cy={from.y} r="3.5" style={{ x, y }} />;
+}
+
+function EcosystemConnection({
+  service,
+  index,
+  progress,
+  clock,
+  selected,
+  animatePackets,
+}: {
+  service: EcosystemService;
+  index: number;
+  progress: MotionValue<number>;
+  clock: MotionValue<number>;
+  selected: boolean;
+  animatePackets: boolean;
+}) {
+  const connection = getConnection(service);
+  const start = 0.04 + index * 0.018;
+  const pathLength = useTransform(progress, [start, 0.58], [0.12, 1]);
+  const nodeScale = useTransform(progress, [0.42, 0.58], [0.7, 1]);
+
   return (
-    <motion.circle
-      className="cloud-packet"
-      r={4.5}
-      cx={from.x}
-      cy={from.y}
-      style={{ x, y, opacity }}
-    />
+    <g>
+      <motion.path
+        className={`ecosystem-connection${selected ? " is-selected" : ""}`}
+        d={connection.path}
+        style={{ pathLength }}
+      />
+      <motion.circle
+        className={`ecosystem-connection-node${selected ? " is-selected" : ""}`}
+        cx={connection.to.x}
+        cy={connection.to.y}
+        r="4"
+        style={{ scale: nodeScale }}
+      />
+      {animatePackets && (
+        <>
+          <FlowPacket
+            clock={clock}
+            from={connection.from}
+            mid={connection.mid}
+            to={connection.to}
+            offset={index * 0.105}
+            reverse={index % 2 === 1}
+          />
+          <FlowPacket
+            clock={clock}
+            from={connection.from}
+            mid={connection.mid}
+            to={connection.to}
+            offset={(index * 0.105 + 0.5) % 1}
+            reverse={index % 2 === 0}
+          />
+        </>
+      )}
+    </g>
+  );
+}
+
+function MobileService({
+  service,
+  selected,
+  onSelect,
+}: {
+  service: EcosystemService;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const { Icon } = service;
+  return (
+    <button
+      type="button"
+      className={`ecosystem-mobile-service${selected ? " is-selected" : ""}`}
+      onClick={onSelect}
+      onFocus={onSelect}
+      aria-pressed={selected}
+    >
+      <ServiceCloudShape id={`mobile-${service.id}`} />
+      <span className="ecosystem-mobile-service-content">
+        <Icon size={22} strokeWidth={1.8} aria-hidden="true" />
+        <span className="ecosystem-mobile-service-name">{service.name}</span>
+        <span className="ecosystem-mobile-service-category">{service.category}</span>
+      </span>
+    </button>
   );
 }
 
 export default function CloudArchitectureAssembly() {
-  const trackRef = useRef<HTMLDivElement | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
   const reduce = useReducedMotion();
-  // Resolved up front so the first paint already matches the static layout —
-  // no visible reflow when the scene switches on small screens.
-  const [staticMode, setStaticMode] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches,
-  );
-  const [selected, setSelected] = useState<ServiceId>("ec2");
-  const [stage, setStage] = useState(0);
-
-  // Small screens and reduced-motion users get the completed architecture in a
-  // dedicated stacked composition instead of the pinned desktop scene.
-  useEffect(() => {
-    const query = window.matchMedia("(max-width: 900px)");
-    const sync = () => setStaticMode(query.matches);
-    sync();
-    query.addEventListener("change", sync);
-    return () => query.removeEventListener("change", sync);
-  }, []);
-
-  const still = staticMode || Boolean(reduce);
-  const assembled = useMotionValue(1);
-
+  const [selected, setSelected] = useState<EcosystemServiceId>("ec2");
+  const [paused, setPaused] = useState(false);
+  const instanceId = useId().replace(/:/g, "");
   const { scrollYProgress } = useScroll({
-    target: trackRef,
-    offset: ["start start", "end end"],
+    target: sectionRef,
+    offset: ["start 82%", "center center"],
   });
-  const sprung = useSpring(scrollYProgress, { stiffness: 120, damping: 30, mass: 0.4 });
-  const progress = still ? assembled : sprung;
-
-  const inView = useInView(trackRef, { amount: 0.1 });
-
-  // Scroll-driven stage readout (re-renders only when the stage changes).
-  useMotionValueEvent(progress, "change", (value) => {
-    let next = 0;
-    for (let i = STAGES.length - 1; i >= 0; i -= 1) {
-      if (value >= STAGES[i].at) {
-        next = i;
-        break;
-      }
-    }
-    setStage((current) => (current === next ? current : next));
-  });
-
-  // A slow packet clock, only while the scene is on screen and motion is on.
+  const progress = useSpring(scrollYProgress, { stiffness: 105, damping: 27, mass: 0.55 });
+  const complete = useMotionValue(1);
+  const assembly = reduce ? complete : progress;
+  const inView = useInView(sectionRef, { amount: 0.12 });
   const clock = useMotionValue(0);
+  const active = ECOSYSTEM_SERVICES.find((service) => service.id === selected) ?? ECOSYSTEM_SERVICES[0];
+
   useAnimationFrame((time) => {
-    if (still || !inView) return;
-    clock.set((time % 3600) / 3600);
+    if (reduce || paused || !inView) return;
+    clock.set((time % 5200) / 5200);
   });
-
-  const glowOpacity = useTransform(progress, CLOUD, [0, 1]);
-  const platformProgress = useTransform(progress, PLATFORM, [0, 1]);
-  const wireDraw = useTransform(progress, WIRE, [0, 1]);
-  const packetOpacity = useTransform(progress, PACKET_GATE, [0, 1]);
-  const finalOpacity = useTransform(progress, FINAL, [0, 1]);
-  const finalY = useTransform(progress, FINAL, [14, 0]);
-
-  const active = SERVICES.find((service) => service.id === selected) ?? SERVICES[0];
 
   return (
-    <section className="cloud-assembly" id="cloud-architecture">
-      <div className="cloud-track" ref={trackRef}>
-        <div className="cloud-stage">
-          <div className="cloud-head">
-            <p className="cloud-eyebrow">THE ARCHITECTURE OF TOMORROW</p>
-            <h2 className="cloud-title">Build Above the Cloud.</h2>
-            <p className="cloud-desc">
-              Explore how compute, storage, databases and networking work together to power modern
-              cloud applications.
+    <section className="cloud-ecosystem" id="cloud-architecture" ref={sectionRef}>
+      <div className="ecosystem-shell">
+        <header className="ecosystem-heading">
+          <div>
+            <p className="ecosystem-eyebrow">EXPLORE THE CLOUD</p>
+            <h2>Everything. <em>Connected.</em></h2>
+            <p className="ecosystem-description">
+              Discover how compute, storage, networking and other AWS services work together to
+              power modern applications.
             </p>
           </div>
+          <Link className="button button-orange ecosystem-learning-link" to="/learning">
+            Explore AWS Learning <ArrowRight size={15} />
+          </Link>
+        </header>
 
-          <div className="cloud-scene">
-            <div className="cloud-visual">
-              <div className="cloud-scene-grid" aria-hidden="true" />
+        <div className="ecosystem-diagram" role="group" aria-label="Interactive AWS service ecosystem">
+          <svg
+            className="ecosystem-connections"
+            viewBox={`0 0 ${ECOSYSTEM_VIEW.width} ${ECOSYSTEM_VIEW.height}`}
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            {ECOSYSTEM_SERVICES.map((service, index) => {
+              return (
+                <EcosystemConnection
+                  key={`connection-${service.id}`}
+                  service={service}
+                  index={index}
+                  progress={assembly}
+                  clock={clock}
+                  selected={selected === service.id}
+                  animatePackets={!reduce && !paused && inView}
+                />
+              );
+            })}
+          </svg>
 
-              {/* Connection paths light up after the modules lock in. */}
-              <svg
-                className="cloud-wires"
-                viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-                preserveAspectRatio="xMidYMid meet"
-                aria-hidden="true"
-              >
-                {SERVICES.map((service) => {
-                  const endX = service.x + (CORE.x - service.x) * 0.6;
-                  const endY = service.y + (CORE.y - service.y) * 0.6;
-                  const dx = endX - service.x;
-                  const dy = endY - service.y;
-                  const len = Math.hypot(dx, dy) || 1;
-                  const bowX = service.x + dx / 2 + (-dy / len) * 24;
-                  const bowY = service.y + dy / 2 + (dx / len) * 24;
-                  return (
-                    <g key={`wire-${service.id}`}>
-                      <motion.path
-                        className="cloud-wire"
-                        d={`M ${service.x} ${service.y} Q ${bowX} ${bowY} ${endX} ${endY}`}
-                        style={{ pathLength: wireDraw, opacity: wireDraw }}
-                      />
-                      <motion.circle
-                        className="cloud-node"
-                        cx={endX}
-                        cy={endY}
-                        r={5}
-                        style={{ opacity: wireDraw }}
-                      />
-                    </g>
-                  );
-                })}
-                <motion.g style={{ opacity: packetOpacity }}>
-                  {SERVICES.map((service, index) => {
-                    const endX = service.x + (CORE.x - service.x) * 0.6;
-                    const endY = service.y + (CORE.y - service.y) * 0.6;
-                    return (
-                      <Packet
-                        key={`packet-${service.id}`}
-                        clock={clock}
-                        from={{ x: service.x, y: service.y }}
-                        to={{ x: endX, y: endY }}
-                        offset={index * 0.19}
-                      />
-                    );
-                  })}
-                </motion.g>
-              </svg>
-
-              {/* Architectural platforms beneath the cloud. */}
-              <div className="cloud-platforms" aria-hidden="true">
-                {PLATFORMS.map((platform) => (
-                  <motion.span
-                    key={`platform-${platform.y}`}
-                    className="cloud-platform"
-                    style={{
-                      top: pct(platform.y, VIEW_H),
-                      width: pct(platform.w, VIEW_W),
-                      opacity: platformProgress,
-                      scaleX: platformProgress,
-                    }}
-                  />
-                ))}
-              </div>
-
-              {/* Cloud core — assembles from separate geometric pieces. */}
-              <div className="cloud-core" aria-hidden="true">
-                <motion.span className="cloud-glow" style={{ opacity: glowOpacity }} />
-                {CLOUD_PARTS.map((part, index) => (
-                  <CloudPart key={part.key} progress={progress} piece={part} index={index} />
-                ))}
-              </div>
-
-              {/* Service modules — clickable, each with its own identity. */}
-              <div className="cloud-modules">
-                {SERVICES.map((service, index) => (
-                  <ServiceModule
-                    key={service.id}
-                    progress={progress}
-                    service={service}
-                    index={index}
-                    selected={selected === service.id}
-                    onSelect={() => setSelected(service.id)}
-                  />
-                ))}
-              </div>
-
-              <motion.p className="cloud-final" style={{ opacity: finalOpacity, y: finalY }}>
-                COMPUTE. STORAGE. NETWORK. INNOVATION.
-              </motion.p>
-            </div>
-          </div>
-
-          <div className="cloud-hud">
-            <span className="cloud-hud-stage">{STAGES[stage].label}</span>
-            <span className="cloud-hud-line" aria-hidden="true" />
-            <span className="cloud-hud-title">{STAGES[stage].title}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="cloud-panel">
-        <div className="cloud-panel-copy" aria-live="polite">
-          <span className="cloud-panel-eyebrow">SERVICE MODULE</span>
-          <h3>{active.name}</h3>
-          <p>{active.detail}</p>
-        </div>
-        <div className="cloud-panel-tabs" role="group" aria-label="Choose a cloud service module">
-          {SERVICES.map((service) => (
-            <button
+          <EcosystemCore progress={assembly} gradientPrefix={`${instanceId}-desktop`} className="ecosystem-core-desktop" />
+          {ECOSYSTEM_SERVICES.map((service, index) => (
+            <OrbitService
               key={service.id}
-              type="button"
-              className={selected === service.id ? "is-active" : undefined}
-              onClick={() => setSelected(service.id)}
-              aria-pressed={selected === service.id}
-            >
-              {service.name.replace("Amazon ", "").replace("AWS ", "")}
-            </button>
+              service={service}
+              index={index}
+              progress={assembly}
+              selected={selected === service.id}
+              onSelect={() => setSelected(service.id)}
+            />
           ))}
         </div>
+
+        <div className="ecosystem-mobile-network">
+          <EcosystemCore progress={assembly} gradientPrefix={`${instanceId}-mobile`} className="ecosystem-core-mobile" />
+          <div className="ecosystem-mobile-modules">
+            {ECOSYSTEM_SERVICES.map((service) => (
+              <MobileService
+                key={`mobile-${service.id}`}
+                service={service}
+                selected={selected === service.id}
+                onSelect={() => setSelected(service.id)}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="ecosystem-info">
+          <div className="ecosystem-info-copy" aria-live="polite">
+            <span className="ecosystem-info-label">SERVICE EXAMPLE</span>
+            <h3>{active.name} <span>/ {active.category}</span></h3>
+            <p>{active.detail}</p>
+          </div>
+          <button
+            type="button"
+            className="ecosystem-motion-toggle"
+            onClick={() => setPaused((value) => !value)}
+            aria-pressed={paused}
+            aria-label={paused ? "Resume cloud data flow animation" : "Pause cloud data flow animation"}
+          >
+            {paused ? <Play size={14} /> : <Pause size={14} />}
+            {paused ? "Resume motion" : "Pause motion"}
+          </button>
+        </div>
+        <p className="ecosystem-disclaimer">
+          Illustrative AWS service examples only. This is not a deployed architecture or live service status.
+        </p>
       </div>
     </section>
   );
