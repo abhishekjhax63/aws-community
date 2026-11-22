@@ -1571,11 +1571,14 @@ button { color: inherit; }
   z-index: 0;
 }
 .hero-content { position: relative; z-index: 1; }
-.hero h1 em, .hero h1 .hero-highlight {
-  background: linear-gradient(120deg, var(--orange), #ffb347);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+.hero h1 em {
+  /* "Build It." — solid AWS orange. The previous gradient-clip treatment set
+     -webkit-text-fill-color: transparent on the <em>, but the real text lives
+     in inline-block reveal spans that inherit the transparent fill WITHOUT the
+     gradient background, so the whole third line rendered invisible. A solid
+     colour is the intended treatment and is always painted. */
+  color: var(--orange);
+  font-style: normal;
 }
 .hero-art-glow {
   background: radial-gradient(ellipse, rgba(255, 153, 0, 0.18), transparent 70%) !important;
@@ -3307,14 +3310,14 @@ button { color: inherit; }
 .hero-status {
   gap: 8px !important;
   padding: 7px 11px;
-  border: 1px solid rgba(255, 153, 0, 0.24);
-  background: rgba(255, 255, 255, 0.62);
-  color: var(--graphite);
-  box-shadow: 0 4px 16px rgba(255, 153, 0, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(30, 41, 59, 0.72);
+  color: var(--subtle-gray);
+  box-shadow: none;
 }
-.hero-status-student { color: #8f5a08; font-weight: 500; }
-.hero-status-divider { color: #94a3b8; }
-.hero-status-builder { color: var(--cobalt); font-weight: 500; }
+.hero-status-student { color: var(--orange); font-weight: 500; }
+.hero-status-divider { color: rgba(184, 194, 208, 0.5); }
+.hero-status-builder { color: var(--white); font-weight: 500; }
 .hero::before {
   display: block;
   z-index: 0;
@@ -3647,4 +3650,500 @@ button { color: inherit; }
   .updates-heading h2,
   .suggestion-copy h2 { font-size: clamp(26px, 7.4vw, 36px); }
   .button { font-size: 12px; }
+}
+
+/* ============================================================
+   PHASE 02 — HOMEPAGE HERO REFINEMENT
+   Headline is always painted, the heading→copy rhythm is tighter and
+   the background lettering is reduced to a faint texture that never
+   competes with the headline.
+   ============================================================ */
+.hero h1 { line-height: 1; }
+.hero-intro { margin-top: 18px; }
+
+/* Background editorial lettering — quiet, low-contrast texture only. */
+.hero-watermark { color: rgba(255, 153, 0, 0.01); }
+.hero-watermark-word { -webkit-text-stroke: 1px rgba(255, 153, 0, 0.04); }
+.hero-watermark-word-second { -webkit-text-stroke: 1px rgba(255, 153, 0, 0.045); }
+.hero-watermark-word::after,
+.hero-watermark-word-second::after {
+  background-image: linear-gradient(
+    108deg,
+    transparent 36%,
+    rgba(255, 153, 0, 0.02) 45%,
+    rgba(255, 153, 0, 0.09) 50%,
+    rgba(255, 153, 0, 0.02) 55%,
+    transparent 64%
+  );
+}
+
+/* Balance the headline and media columns so the slideshow reads as a partner
+   to the copy rather than a separate panel. */
+.hero-content { grid-template-columns: 1.06fr 0.94fr; }
+
+/* Branding in the header must never be vertically clipped. */
+.site-header,
+.brand,
+.brand-mark { overflow: visible; }
+
+/* ============================================================
+   PHASE 03 — SLIDESHOW FRAME REDESIGN
+   Premium editorial photography on deep navy frame surfaces, dark
+   slate layered frames, thin architectural borders and AWS orange
+   corner accents. No white rectangular frame, no thick white
+   borders, no glassmorphism. The control strip becomes a premium
+   dark system: slide number, total count, progress, prev/next and
+   play/pause — with keyboard navigation and swipe.
+   ============================================================ */
+
+/* ---------- frame surfaces ---------- */
+.photo-slideshow {
+  background: var(--navy-core);
+}
+.photo-slideshow-cinema {
+  border: 1px solid var(--border-dark);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 40px 90px -60px rgba(0, 0, 0, 0.85);
+}
+/* Offset inner outline — a thin architectural rule inside the frame. */
+.photo-slideshow-cinema::after {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  z-index: 7;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+/* A second offset dark-slate layer reads as a stacked plate edge. */
+.photo-slideshow-cinema .photo-stage {
+  background: var(--near-black);
+}
+.photo-slideshow:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 3px;
+}
+
+/* ---------- editorial typography on the dark plate ---------- */
+.ed-marker { color: var(--subtle-gray); }
+.ed-marker-num { color: var(--white); }
+.ed-headline { color: var(--white); }
+.ed-headline-accent { color: var(--orange); }
+.ed-note { color: var(--subtle-gray); }
+
+/* ---------- photographs: thin architectural borders, deep shadows ---------- */
+.ed-panel {
+  background: var(--dark-slate);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 34px 74px -42px rgba(0, 0, 0, 0.9);
+}
+.ed-panel--a-inset,
+.ed-panel--b-second { border-color: rgba(255, 255, 255, 0.34); }
+.ed-slide.is-active .ed-panel:hover { border-color: rgba(255, 255, 255, 0.46); }
+.ed-arch {
+  border: 1px solid var(--border-dark);
+  box-shadow: 0 34px 74px -46px rgba(0, 0, 0, 0.9);
+}
+.ed-arch::before { border-color: rgba(255, 255, 255, 0.1); }
+.ed-panel--c { border: 0; }
+/* Loading placeholder — dark, never a white flash. */
+.ed-shimmer {
+  background: linear-gradient(100deg, #1e293b 30%, #26344a 50%, #1e293b 70%);
+  background-size: 220% 100%;
+}
+
+/* ---------- premium dark control system ---------- */
+.ed-bar {
+  background: var(--near-black);
+  border-top: 1px solid var(--border-dark);
+}
+.ed-bar-count { color: var(--subtle-gray); }
+.ed-bar-count b { color: var(--white); }
+.ed-bar-track { background: rgba(255, 255, 255, 0.18); }
+.ed-tick { color: var(--subtle-gray); }
+.ed-tick:hover { color: var(--white); }
+.ed-tick.is-active { color: var(--orange); }
+.photo-btn {
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  color: var(--white);
+}
+.photo-btn:hover {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: var(--navy-core);
+}
+.photo-btn:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+/* ---------- empty state on the dark plate ---------- */
+.photo-empty {
+  background: var(--dark-slate);
+  border: 1px dashed var(--border-dark);
+}
+.photo-empty h3 { color: var(--white); }
+.photo-empty p { color: var(--subtle-gray); }
+
+/* ---------- hero plate: dark frame instead of a light inset ---------- */
+.ed-panel--hero { border-color: rgba(255, 255, 255, 0.18); }
+/* The compact hero bar sits inside the hero frame, so it stays transparent. */
+.ed-bar--hero { background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-slideshow-cinema::after { border-color: rgba(255, 255, 255, 0.08); }
+}
+
+/* =====================================================================
+   SIGNATURE CLOUD ARCHITECTURE ASSEMBLY
+   Dark editorial scene on the AWS Learning page. Scroll-driven on desktop,
+   collapsed into a static stacked composition on small screens and for
+   reduced-motion users.
+   ===================================================================== */
+.cloud-assembly {
+  position: relative;
+  overflow-x: clip;
+  background: var(--navy-core);
+  color: var(--white);
+  border-top: 1px solid var(--border-dark);
+  border-bottom: 1px solid var(--border-dark);
+  scroll-margin-top: 76px;
+}
+.cloud-assembly::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(255, 153, 0, 0.07), transparent 60%);
+}
+
+/* ----- scroll track + sticky stage ----- */
+.cloud-track { position: relative; height: 340vh; }
+.cloud-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(18px, 2.6vh, 34px);
+  padding: clamp(48px, 7vh, 88px) clamp(20px, 8vw, 120px) clamp(32px, 5vh, 56px);
+}
+
+/* ----- editorial header ----- */
+.cloud-head { flex: none; max-width: 720px; }
+.cloud-eyebrow {
+  margin: 0 0 14px;
+  font: 500 clamp(10px, 1.1vw, 11px) / 1 var(--mono);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--orange);
+}
+.cloud-title {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(30px, 4.4vw, 58px);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: var(--white);
+}
+.cloud-desc {
+  margin: 16px 0 0;
+  max-width: 56ch;
+  font-size: clamp(13px, 1.2vw, 16px);
+  line-height: 1.6;
+  color: var(--subtle-gray);
+}
+
+/* ----- scene ----- */
+.cloud-scene {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+}
+.cloud-visual {
+  position: relative;
+  width: 100%;
+  max-width: 1060px;
+  aspect-ratio: 1000 / 640;
+}
+/* Where container queries are available the scene scales to whichever of the
+   available width or height runs out first, so the composition never distorts. */
+@supports (container-type: size) {
+  .cloud-scene { container-type: size; }
+  .cloud-visual {
+    width: min(100cqw, calc(100cqh * 1.5625));
+    max-width: none;
+  }
+}
+.cloud-scene-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(circle at 50% 44%, #000 40%, transparent 78%);
+  mask-image: radial-gradient(circle at 50% 44%, #000 40%, transparent 78%);
+}
+
+/* ----- connection paths ----- */
+.cloud-wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.cloud-wire {
+  fill: none;
+  stroke: var(--orange);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.cloud-node { fill: var(--orange); }
+.cloud-packet { fill: var(--white); }
+
+/* ----- architectural platforms ----- */
+.cloud-platforms { position: absolute; inset: 0; pointer-events: none; }
+.cloud-platform {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  height: 1px;
+  transform-origin: center;
+  background: linear-gradient(90deg, transparent, rgba(184, 194, 208, 0.4), transparent);
+}
+
+/* ----- cloud core (four-piece assembly) ----- */
+.cloud-core {
+  position: absolute;
+  left: 50%;
+  top: 39.0625%;
+  width: 24%;
+  aspect-ratio: 1.75 / 1;
+  transform: translate(-50%, -50%);
+}
+.cloud-glow {
+  position: absolute;
+  inset: -46%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 153, 0, 0.24), transparent 62%);
+}
+.cloud-part {
+  position: absolute;
+  background: linear-gradient(180deg, #26354c, var(--dark-slate));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.cloud-part--base { left: 4%; right: 4%; bottom: 0; height: 44%; border-radius: 999px; }
+.cloud-part--left { left: 0; bottom: 24%; width: 46%; height: 62%; border-radius: 50%; }
+.cloud-part--right { right: 0; bottom: 22%; width: 40%; height: 56%; border-radius: 50%; }
+.cloud-part--top { left: 26%; bottom: 40%; width: 42%; height: 58%; border-radius: 50%; }
+
+/* ----- clickable service modules ----- */
+.cloud-modules { position: absolute; inset: 0; }
+.cloud-module-slot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+.cloud-module {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-dark);
+  background: rgba(17, 24, 39, 0.9);
+  color: var(--white);
+  text-align: left;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: border-color 0.25s var(--ease-out), background 0.25s var(--ease-out);
+}
+.cloud-module:hover { border-color: rgba(255, 153, 0, 0.5); }
+.cloud-module.is-selected {
+  border-color: var(--orange);
+  background: rgba(30, 41, 59, 0.95);
+  box-shadow: 0 0 0 1px rgba(255, 153, 0, 0.3), 0 18px 40px -26px rgba(255, 153, 0, 0.7);
+}
+.cloud-module:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.cloud-module-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 8px;
+  background: rgba(255, 153, 0, 0.12);
+  color: var(--orange);
+}
+.cloud-module-icon svg { width: 18px; height: 18px; }
+.cloud-module-body { display: block; }
+.cloud-module-name {
+  display: block;
+  font: 600 12px / 1.2 var(--display);
+  color: var(--white);
+  white-space: nowrap;
+}
+.cloud-module-role {
+  display: block;
+  margin-top: 3px;
+  font: 9.5px / 1.2 var(--mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--subtle-gray);
+  white-space: nowrap;
+}
+
+/* ----- closing statement ----- */
+.cloud-final {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: clamp(9px, 1vw, 12px);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--orange);
+}
+
+/* ----- stage readout ----- */
+.cloud-hud {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: clamp(14px, 2.4vh, 26px);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.cloud-hud-stage { color: var(--orange); }
+.cloud-hud-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 153, 0, 0.6), rgba(184, 194, 208, 0.16));
+}
+.cloud-hud-title { color: var(--white); }
+
+/* ----- educational info panel ----- */
+.cloud-panel {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(20px, 4vw, 48px);
+  padding: clamp(32px, 5vw, 56px) clamp(20px, 8vw, 120px);
+  background: var(--near-black);
+  border-top: 1px solid var(--border-dark);
+}
+.cloud-panel-eyebrow {
+  display: block;
+  margin-bottom: 10px;
+  font: 10px / 1 var(--mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--orange);
+}
+.cloud-panel-copy h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(20px, 2.4vw, 30px);
+  color: var(--white);
+}
+.cloud-panel-copy p {
+  margin: 10px 0 0;
+  max-width: 64ch;
+  font-size: clamp(13px, 1.1vw, 15px);
+  line-height: 1.6;
+  color: var(--subtle-gray);
+}
+.cloud-panel-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.cloud-panel-tabs button {
+  min-height: 38px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--border-dark);
+  background: transparent;
+  color: var(--subtle-gray);
+  font: 500 11px / 1 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.22s var(--ease-out), border-color 0.22s var(--ease-out), background 0.22s var(--ease-out);
+}
+.cloud-panel-tabs button:hover { color: var(--white); border-color: rgba(255, 255, 255, 0.3); }
+.cloud-panel-tabs button.is-active {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: var(--navy-core);
+}
+.cloud-panel-tabs button:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+
+/* ----- static composition: small screens + reduced motion ----- */
+@media (max-width: 900px), (prefers-reduced-motion: reduce) {
+  .cloud-track { height: auto; }
+  .cloud-stage {
+    position: static;
+    height: auto;
+    min-height: 0;
+    padding: clamp(56px, 9vw, 88px) clamp(20px, 6vw, 64px) clamp(36px, 6vw, 56px);
+  }
+  .cloud-scene { display: block; }
+  .cloud-visual {
+    height: auto;
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    aspect-ratio: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+  }
+  .cloud-scene-grid,
+  .cloud-wires,
+  .cloud-platforms { display: none; }
+  .cloud-core {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    width: min(260px, 66%);
+    margin: 6px 0 2px;
+  }
+  .cloud-modules {
+    position: static;
+    inset: auto;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .cloud-module-slot { position: static; transform: none; }
+  .cloud-module { width: 100%; }
+  .cloud-module-body { min-width: 0; }
+  .cloud-module-name,
+  .cloud-module-role { white-space: normal; }
+  .cloud-final { position: static; left: auto; right: auto; }
+  .cloud-panel { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* One module per row once the cards would get too narrow. */
+@media (max-width: 430px) {
+  .cloud-modules { grid-template-columns: minmax(0, 1fr); }
 }

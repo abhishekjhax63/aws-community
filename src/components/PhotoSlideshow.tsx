@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
@@ -306,6 +307,22 @@ export default function PhotoSlideshow({
     if (Math.abs(dx) > 44) go(dx < 0 ? index + 1 : index - 1);
   };
 
+  // Keyboard support (WAI-ARIA carousel pattern): the region itself is
+  // focusable, arrow keys move between slides and Space toggles playback.
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (count <= 1) return;
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      go(index - 1);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      go(index + 1);
+    } else if (event.key === " " || event.key === "Spacebar") {
+      event.preventDefault();
+      setPaused((value) => !value);
+    }
+  };
+
   if (count === 0) {
     return (
       <div className={["photo-empty", className].filter(Boolean).join(" ")}>
@@ -356,6 +373,8 @@ export default function PhotoSlideshow({
       role="region"
       aria-roledescription="carousel"
       aria-label={ariaLabel}
+      tabIndex={0}
+      onKeyDown={onKeyDown}
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
       onPointerCancel={() => {
