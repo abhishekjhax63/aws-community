@@ -21,15 +21,13 @@ const STATUS_FILTERS = [
 function matchesStatus(event: CommunityEvent, filterId: string, now: number) {
   if (filterId === "all") return true;
   if (filterId === "upcoming") return Boolean(event.starts_at && new Date(event.starts_at).getTime() >= now);
-  if (filterId === "completed") {
-    return event.registration_status === "completed" || Boolean(event.starts_at && new Date(event.starts_at).getTime() < now);
-  }
+  if (filterId === "completed") return isPastEvent(event, now);
   return event.registration_status === filterId;
 }
 
 function isPastEvent(event: CommunityEvent, now: number) {
-  return event.registration_status === "completed" ||
-    Boolean(event.starts_at && new Date(event.starts_at).getTime() < now);
+  const eventEnd = event.ends_at ?? event.starts_at;
+  return Boolean(eventEnd && new Date(eventEnd).getTime() < now);
 }
 
 function EventCard({ event, index, past }: { event: CommunityEvent; index: number; past: boolean }) {

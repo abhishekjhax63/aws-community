@@ -110,11 +110,13 @@ export default function EventDetail() {
       ),
     );
   }
-  const eventIsPast = event.registration_status === "completed" ||
-    Boolean(event.starts_at && new Date(event.starts_at).getTime() < Date.now());
+  const eventEnd = event.ends_at ?? event.starts_at;
+  const eventIsPast = Boolean(eventEnd && new Date(eventEnd).getTime() < Date.now());
   const seatsLeft =
     event.capacity === null ? null : Math.max(0, event.capacity);
-  const registrationOpen = event.registration_status === "registration_open" && !eventIsPast;
+  const registrationOpen = event.registration_status === "registration_open" &&
+    Boolean(event.starts_at && new Date(event.starts_at).getTime() > Date.now()) &&
+    !eventIsPast;
 
   return (
     <>

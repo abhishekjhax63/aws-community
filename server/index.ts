@@ -19,6 +19,10 @@ const supabase = supabaseUrl && serviceRoleKey
 
 app.disable("x-powered-by");
 app.use(express.json({ limit: "32kb" }));
+app.use("/api", (_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");
+  next();
+});
 const mediaUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024, files: 1 },
@@ -219,7 +223,7 @@ const adminClient = supabase as unknown as {
 };
 
 async function signMedia(value: string | null) {
-  if (!value || /^https?:\/\//i.test(value) || !supabase) return value;
+  if (!value || /^https?:\/\//i.test(value) || value.startsWith("/") || !supabase) return value;
   const path = value.startsWith("community-media/") ? value.slice("community-media/".length) : value;
   const { data, error } = await adminClient.storage.from("community-media").createSignedUrl(path, 60 * 60);
   return error ? null : data.signedUrl;
@@ -820,6 +824,10 @@ if (existsSync(distDirectory)) {
   });
 }
 
-app.listen(port, () => {
-  console.log(`Community API listening on port ${port}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(port, () => {
+    console.log(`Community API listening on port ${port}`);
+  });
+}
+
+export default app;
