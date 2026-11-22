@@ -31,9 +31,9 @@ export default function Footer() {
             </span>
           </Link>
           <p className="footer-tagline">
-            Building Skills. Connecting Minds.
+            Learn together. Build together.
             <br />
-            Creating What&apos;s Next.
+            Grow together.
           </p>
           <p className="footer-about">
             An independent, student-led community for cloud, serverless, and AI learning at Amity
@@ -42,7 +42,7 @@ export default function Footer() {
         </div>
 
         <nav className="footer-column" aria-label="Footer navigation">
-          <span>EXPLORE</span>
+          <span>COMMUNITY</span>
           {exploreLinks.map((link) => (
             <Link key={link.to} to={link.to}>
               {link.label}
@@ -51,7 +51,7 @@ export default function Footer() {
         </nav>
 
         <nav className="footer-column" aria-label="AWS learning links">
-          <span>AWS LEARNING</span>
+          <span>RESOURCES</span>
           {learningPaths.slice(0, 5).map((path) => (
             <a key={path.number} href={path.href} target="_blank" rel="noreferrer">
               {path.title}

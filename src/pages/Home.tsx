@@ -156,28 +156,33 @@ export default function Home() {
         <div className="hero-content">
           <div className="hero-copy">
             <p className="eyebrow light-eyebrow">AWS STUDENT BUILDER GROUP</p>
+            <p className="hero-university">AMITY UNIVERSITY PATNA</p>
             <h1>
               <TextReveal as="span" mode="word" stagger={60}>
-                Build the cloud.
+                Don&apos;t Just Learn
+              </TextReveal>
+              <br />
+              <TextReveal as="span" mode="word" stagger={60} delay={180}>
+                the Future.
               </TextReveal>
               <br />
               <em>
-                <TextReveal as="span" mode="word" stagger={60} delay={300}>
-                  Create the future.
+                <TextReveal as="span" mode="word" stagger={60} delay={360}>
+                  Build It.
                 </TextReveal>
               </em>
             </h1>
             <p className="hero-intro">
-              An AWS-focused student builder community at Amity University Patna. Learn cloud
-              technologies, build real-world projects, collaborate with developers, and turn ideas
-              into innovation.
+              A community of passionate student builders exploring cloud computing, artificial
+              intelligence and hands-on innovation. Learn together, collaborate on ideas and build
+              what&apos;s next.
             </p>
             <div className="hero-actions">
-              <Link className="button button-orange" to="/about">
-                Explore community <ArrowRight size={16} />
+              <Link className="button button-orange" to="/auth/signup">
+                Join the Community <ArrowRight size={16} />
               </Link>
               <Link className="button button-secondary" to="/events">
-                Discover events <ArrowDownRight size={16} />
+                Explore Events <ArrowDownRight size={16} />
               </Link>
             </div>
             <div className="hero-coordinates">
