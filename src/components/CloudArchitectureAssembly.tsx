@@ -23,6 +23,7 @@ import {
   useScroll,
   useSpring,
   useTransform,
+  useMotionValueEvent,
   type MotionValue,
 } from "framer-motion";
 
@@ -44,8 +45,6 @@ type EcosystemService = {
   Icon: LucideIcon;
   x: number;
   y: number;
-  dx: number;
-  dy: number;
   rotation: number;
 };
 
@@ -58,8 +57,6 @@ const ECOSYSTEM_SERVICES: EcosystemService[] = [
     Icon: Server,
     x: 560,
     y: 76,
-    dx: 0,
-    dy: -18,
     rotation: -2,
   },
   {
@@ -70,8 +67,6 @@ const ECOSYSTEM_SERVICES: EcosystemService[] = [
     Icon: Network,
     x: 810,
     y: 166,
-    dx: 16,
-    dy: -12,
     rotation: 2,
   },
   {
@@ -82,8 +77,6 @@ const ECOSYSTEM_SERVICES: EcosystemService[] = [
     Icon: Database,
     x: 1015,
     y: 380,
-    dx: 22,
-    dy: 0,
     rotation: 2,
   },
   {
@@ -94,8 +87,6 @@ const ECOSYSTEM_SERVICES: EcosystemService[] = [
     Icon: Monitor,
     x: 810,
     y: 594,
-    dx: 16,
-    dy: 12,
     rotation: 2,
   },
   {
@@ -106,8 +97,6 @@ const ECOSYSTEM_SERVICES: EcosystemService[] = [
     Icon: Smartphone,
     x: 560,
     y: 684,
-    dx: 0,
-    dy: 18,
     rotation: 2,
   },
   {
@@ -118,8 +107,6 @@ const ECOSYSTEM_SERVICES: EcosystemService[] = [
     Icon: Mail,
     x: 310,
     y: 594,
-    dx: -16,
-    dy: 12,
     rotation: -2,
   },
   {
@@ -130,8 +117,6 @@ const ECOSYSTEM_SERVICES: EcosystemService[] = [
     Icon: ShieldCheck,
     x: 105,
     y: 380,
-    dx: -22,
-    dy: 0,
     rotation: -2,
   },
   {
@@ -142,8 +127,6 @@ const ECOSYSTEM_SERVICES: EcosystemService[] = [
     Icon: AppWindow,
     x: 310,
     y: 166,
-    dx: -16,
-    dy: -12,
     rotation: -2,
   },
 ];
@@ -187,15 +170,15 @@ function EcosystemCore({
   gradientPrefix: string;
   className?: string;
 }) {
-  const x = useTransform(progress, [0, 0.52], [0, 0]);
-  const y = useTransform(progress, [0, 0.52], [14, 0]);
-  const scale = useTransform(progress, [0, 0.52], [0.97, 1]);
+  const y = useTransform(progress, [0, 0.5], [14, 0]);
+  const scale = useTransform(progress, [0, 0.5], [0.9, 1]);
   const rotate = useTransform(progress, [0, 0.52], [-1.2, 0]);
   const shineX = useTransform(progress, [0, 0.52], [-8, 0]);
+  const outlineProgress = useTransform(progress, [0, 0.5], [0.16, 1]);
 
   return (
     <div className={`ecosystem-core-position ${className}`}>
-      <motion.div className="ecosystem-core" style={{ x, y, scale, rotate }}>
+      <motion.div className="ecosystem-core" style={{ y, scale, rotate }}>
         <svg viewBox="0 0 440 280" role="img" aria-labelledby={`${gradientPrefix}-title`}>
           <title id={`${gradientPrefix}-title`}>Cloud infrastructure connected to AWS service examples</title>
           <defs>
@@ -224,13 +207,14 @@ function EcosystemCore({
               </feMerge>
             </filter>
           </defs>
-          <path
+          <motion.path
             className="ecosystem-core-shadow"
             d="M111 225C66 225 38 197 38 160c0-34 25-63 61-68 9-42 46-70 91-70 39 0 72 22 86 55 13-10 28-15 45-15 41 0 74 32 75 73 33 7 54 31 54 61 0 31-25 53-61 53H111Z"
             fill={`url(#${gradientPrefix}-fill)`}
             stroke="#ff9900"
-            strokeWidth="7"
+            strokeWidth="4"
             filter={`url(#${gradientPrefix}-shadow)`}
+            style={{ pathLength: outlineProgress }}
           />
           <g clipPath={`url(#${gradientPrefix}-clip)`}>
             <motion.path
@@ -241,9 +225,9 @@ function EcosystemCore({
             <path d="M92 208c67 25 190 30 292 0" fill="none" stroke="#ffffff" strokeOpacity="0.72" strokeWidth="3" />
             <path d="M121 228c73 13 173 12 248-2" fill="none" stroke="#ff9900" strokeOpacity="0.8" strokeWidth="4" />
           </g>
-          <text className="ecosystem-core-wordmark" x="220" y="145" textAnchor="middle">AWS</text>
+          <text className="ecosystem-core-wordmark" x="220" y="145" textAnchor="middle">CLOUD</text>
           <path d="M160 160h120" stroke="#ff9900" strokeWidth="3" />
-          <text className="ecosystem-core-caption" x="220" y="184" textAnchor="middle">CLOUD ECOSYSTEM</text>
+          <text className="ecosystem-core-caption" x="220" y="184" textAnchor="middle">INFRASTRUCTURE</text>
         </svg>
       </motion.div>
     </div>
@@ -263,7 +247,7 @@ function ServiceCloudShape({ id }: { id: string }) {
         d="M47 119C22 119 8 104 8 84c0-19 14-34 34-37 5-25 26-40 51-40 22 0 40 12 47 31 7-6 16-9 25-9 22 0 39 17 40 39 18 4 29 16 29 31 0 13-12 22-29 22H47Z"
         fill={`url(#service-${id}-fill)`}
         stroke="#ff9900"
-        strokeWidth="2.5"
+        strokeWidth="2"
       />
       <path
         d="M45 112c-17-4-27-14-27-29 0-13 9-23 23-27 6-20 23-31 43-31 17 0 31 7 40 20"
@@ -291,11 +275,12 @@ function OrbitService({
   onSelect: () => void;
 }) {
   const start = 0.06 + index * 0.025;
-  const x = useTransform(progress, [start, 0.56], [service.dx, 0]);
-  const y = useTransform(progress, [start, 0.56], [service.dy, 0]);
+  const inwardX = (ECOSYSTEM_CENTER.x - service.x) * 0.16;
+  const inwardY = (ECOSYSTEM_CENTER.y - service.y) * 0.16;
+  const x = useTransform(progress, [start, 0.56], [inwardX, 0]);
+  const y = useTransform(progress, [start, 0.56], [inwardY, 0]);
   const rotate = useTransform(progress, [start, 0.56], [service.rotation, 0]);
-  const scale = useTransform(progress, [start, 0.56], [0.94, 1]);
-  const opacity = useTransform(progress, [0, start], [0.82, 1]);
+  const scale = useTransform(progress, [start, 0.56], [0.82, 1]);
   const { Icon } = service;
 
   return (
@@ -306,7 +291,7 @@ function OrbitService({
       <motion.button
         type="button"
         className={`ecosystem-service${selected ? " is-selected" : ""}`}
-        style={{ x, y, rotate, scale, opacity }}
+        style={{ x, y, rotate, scale }}
         onClick={onSelect}
         onFocus={onSelect}
         aria-pressed={selected}
@@ -370,7 +355,7 @@ function EcosystemConnection({
 }) {
   const connection = getConnection(service);
   const start = 0.04 + index * 0.018;
-  const pathLength = useTransform(progress, [start, 0.58], [0.12, 1]);
+  const pathLength = useTransform(progress, [start, 0.58], [0, 1]);
   const nodeScale = useTransform(progress, [0.42, 0.58], [0.7, 1]);
 
   return (
@@ -444,6 +429,7 @@ export default function CloudArchitectureAssembly() {
   const reduce = useReducedMotion();
   const [selected, setSelected] = useState<EcosystemServiceId>("ec2");
   const [paused, setPaused] = useState(false);
+  const [assembled, setAssembled] = useState(false);
   const instanceId = useId().replace(/:/g, "");
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -455,6 +441,10 @@ export default function CloudArchitectureAssembly() {
   const inView = useInView(sectionRef, { amount: 0.12 });
   const clock = useMotionValue(0);
   const active = ECOSYSTEM_SERVICES.find((service) => service.id === selected) ?? ECOSYSTEM_SERVICES[0];
+
+  useMotionValueEvent(assembly, "change", (value) => {
+    setAssembled(value >= 0.58);
+  });
 
   useAnimationFrame((time) => {
     if (reduce || paused || !inView) return;
@@ -494,7 +484,7 @@ export default function CloudArchitectureAssembly() {
                   progress={assembly}
                   clock={clock}
                   selected={selected === service.id}
-                  animatePackets={!reduce && !paused && inView}
+                  animatePackets={!reduce && !paused && inView && assembled}
                 />
               );
             })}

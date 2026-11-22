@@ -1,26 +1,10 @@
 import {
   ArrowUpRight,
-  CalendarDays,
-  Facebook,
-  Github,
-  Instagram,
-  Linkedin,
-  Youtube,
-  Globe2,
-  type LucideIcon,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useSiteSettings } from "../lib/site";
 import { getCommunitySocialLinks } from "../lib/socialLinks";
-
-const icons: Record<string, LucideIcon> = {
-  facebook: Facebook,
-  github: Github,
-  instagram: Instagram,
-  linkedin: Linkedin,
-  meetup: CalendarDays,
-  youtube: Youtube,
-};
+import SocialPlatformIcon from "./SocialPlatformIcon";
 
 export function SocialMediaCards({ compact = false }: { compact?: boolean }) {
   const settings = useSiteSettings();
@@ -30,17 +14,19 @@ export function SocialMediaCards({ compact = false }: { compact?: boolean }) {
   return (
     <div className={compact ? "social-card-grid is-compact" : "social-card-grid"}>
       {links.map((link) => {
-        const Icon = icons[link.platform.toLowerCase()] ?? Globe2;
+        const platformClass = link.platform.toLowerCase().replace(/[^a-z0-9]+/g, "-");
         return (
           <a
-            className="social-card"
+            className={`social-card social-card--${platformClass}`}
             href={link.url}
             key={link.id}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`${link.kind === "post" ? "View community post on" : "Visit"} ${link.platform}: ${link.handle}`}
           >
-            <span className="social-card-icon" aria-hidden="true"><Icon size={21} /></span>
+            <span className="social-card-icon">
+              <SocialPlatformIcon platform={link.platform} />
+            </span>
             <span className="social-card-copy">
               <span className="social-card-platform">{link.platform}</span>
               <strong>{link.handle}</strong>

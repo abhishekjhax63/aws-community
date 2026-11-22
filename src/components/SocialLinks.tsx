@@ -1,15 +1,7 @@
-import { ArrowUpRight, CalendarDays, Facebook, Github, Globe2, Instagram, Linkedin, Youtube, type LucideIcon } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import type { SiteSettings } from "../lib/types";
 import { getCommunitySocialLinks } from "../lib/socialLinks";
-
-const icons: Record<string, LucideIcon> = {
-  facebook: Facebook,
-  github: Github,
-  instagram: Instagram,
-  linkedin: Linkedin,
-  meetup: CalendarDays,
-  youtube: Youtube,
-};
+import SocialPlatformIcon from "./SocialPlatformIcon";
 
 export default function SocialLinks({
   settings,
@@ -22,7 +14,6 @@ export default function SocialLinks({
   return (
     <div className={variant === "footer" ? "footer-socials" : "contact-links"}>
       {links.map((link) => {
-        const Icon = icons[link.platform.toLowerCase()] ?? Globe2;
         return (
           <a
             key={link.id}
@@ -32,7 +23,7 @@ export default function SocialLinks({
             aria-label={`${link.kind === "post" ? "Community post on" : "Community on"} ${link.platform}: ${link.handle}`}
             title={`${link.platform}: ${link.handle}`}
           >
-            <Icon size={variant === "footer" ? 16 : 17} />
+            <SocialPlatformIcon platform={link.platform} />
             {variant !== "footer" && <ArrowUpRight size={11} aria-hidden="true" />}
           </a>
         );

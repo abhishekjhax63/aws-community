@@ -109,11 +109,18 @@ function buildSlides(photos: SlidePhoto[]): SlideSpec[] {
 function CompositionA({
   spec,
   index,
+  count,
   active,
   panel,
 }: CompositionProps) {
   return (
-    <article className={`ed-slide ed-slide--a ${active ? "is-active" : ""}`} aria-hidden={!active}>
+    <article
+      className={`ed-slide ed-slide--a ${active ? "is-active" : ""}`}
+      role="group"
+      aria-roledescription="slide"
+      aria-label={`Slide ${index + 1} of ${count}: ${spec.main.alt || "Community photograph"}`}
+      aria-hidden={!active}
+    >
       <div className="ed-cell ed-cell--text">
         <EdText phrase={spec.phrase} num={pad(index + 1)} />
       </div>
@@ -133,11 +140,18 @@ function CompositionA({
 function CompositionB({
   spec,
   index,
+  count,
   active,
   panel,
 }: CompositionProps) {
   return (
-    <article className={`ed-slide ed-slide--b ${active ? "is-active" : ""}`} aria-hidden={!active}>
+    <article
+      className={`ed-slide ed-slide--b ${active ? "is-active" : ""}`}
+      role="group"
+      aria-roledescription="slide"
+      aria-label={`Slide ${index + 1} of ${count}: ${spec.main.alt || "Community photograph"}`}
+      aria-hidden={!active}
+    >
       <div className="ed-cell ed-cell--text">
         <EdText phrase={spec.phrase} num={pad(index + 1)} />
       </div>
@@ -158,13 +172,20 @@ function CompositionB({
 function CompositionC({
   spec,
   index,
+  count,
   active,
   panel,
   photos,
   onSelect,
 }: CompositionProps & { photos: SlidePhoto[]; onSelect: (next: number) => void }) {
   return (
-    <article className={`ed-slide ed-slide--c ${active ? "is-active" : ""}`} aria-hidden={!active}>
+    <article
+      className={`ed-slide ed-slide--c ${active ? "is-active" : ""}`}
+      role="group"
+      aria-roledescription="slide"
+      aria-label={`Slide ${index + 1} of ${count}: ${spec.main.alt || "Community photograph"}`}
+      aria-hidden={!active}
+    >
       <div className="ed-cell ed-cell--c-media">
         <div className="ed-arch">
           {panel(spec.main, "ed-panel--c", undefined, 0, true)}
@@ -208,11 +229,18 @@ function CompositionC({
 function CompositionD({
   spec,
   index,
+  count,
   active,
   panel,
 }: CompositionProps) {
   return (
-    <article className={`ed-slide ed-slide--d ${active ? "is-active" : ""}`} aria-hidden={!active}>
+    <article
+      className={`ed-slide ed-slide--d ${active ? "is-active" : ""}`}
+      role="group"
+      aria-roledescription="slide"
+      aria-label={`Slide ${index + 1} of ${count}: ${spec.main.alt || "Community photograph"}`}
+      aria-hidden={!active}
+    >
       <div className="ed-cell ed-cell--text">
         <EdText phrase={spec.phrase} num={pad(index + 1)} />
         <span className="ed-accent ed-accent--d" aria-hidden="true" />
@@ -239,6 +267,7 @@ type PanelFactory = (
 type CompositionProps = {
   spec: SlideSpec;
   index: number;
+  count: number;
   active: boolean;
   panel: PanelFactory;
 };
@@ -360,13 +389,18 @@ export default function PhotoSlideshow({
   // focusable, arrow keys move between slides and Space toggles playback.
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (count <= 1) return;
+    const target = event.target;
+    const isControl =
+      target instanceof Element &&
+      target !== event.currentTarget &&
+      Boolean(target.closest("a, button, input, select, textarea, [contenteditable='true']"));
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       go(index - 1);
     } else if (event.key === "ArrowRight") {
       event.preventDefault();
       go(index + 1);
-    } else if (event.key === " " || event.key === "Spacebar") {
+    } else if (!isControl && (event.key === " " || event.key === "Spacebar")) {
       event.preventDefault();
       setPaused((value) => !value);
     }
@@ -402,6 +436,7 @@ export default function PhotoSlideshow({
   const compositionProps = (spec: SlideSpec, i: number) => ({
     spec,
     index: i,
+    count,
     active: i === index,
     panel,
   });
