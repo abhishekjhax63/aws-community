@@ -16,6 +16,7 @@ const ROUTE_DESCRIPTIONS: Record<string, string> = {
   "/events": "Workshops, build sessions and hackathons hosted by the AWS Student Builder Group at Amity University Patna.",
   "/gallery": "Photographs from community events, workshops and build sessions at Amity University Patna.",
   "/updates": "Announcements and updates from the AWS Student Builder Group at Amity University Patna.",
+  "/socials": "Verified social links for the AWS Student Builder Group at Amity University Patna.",
   "/learning": "Curated AWS learning paths and cloud resources for students at Amity University Patna.",
   "/suggestions": "Share ideas and suggestions with the AWS Student Builder Group at Amity University Patna.",
 };

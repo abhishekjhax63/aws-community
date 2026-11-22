@@ -65,6 +65,9 @@ export async function getSettings(signal?: AbortSignal) {
   const settings: SiteSettings = {};
   result.data.forEach((item) => {
     if (typeof item.value === "string") settings[item.key] = item.value;
+    else if (item.key === "social_links" && Array.isArray(item.value)) {
+      settings.social_links = JSON.stringify(item.value);
+    }
   });
   return settings;
 }

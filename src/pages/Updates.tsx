@@ -66,7 +66,13 @@ export default function Updates() {
               <Reveal className="update-card" key={announcement.id} delay={(index % 3) * 60}>
                 <div className="update-card-media">
                   {announcement.cover_image_url ? (
-                    <img src={announcement.cover_image_url} alt="" loading="lazy" />
+                    <img
+                      src={announcement.cover_image_url}
+                      alt={announcement.slug === "explore-aws-builder-center"
+                        ? "Community-created AWS Builder Center resource feature; not official AWS artwork."
+                        : ""}
+                      loading="lazy"
+                    />
                   ) : (
                     <span className="update-card-placeholder" aria-hidden="true" />
                   )}
@@ -83,11 +89,12 @@ export default function Updates() {
                   <p>{announcement.description.slice(0, 200)}{announcement.description.length > 200 ? "…" : ""}</p>
                   <div className="update-card-actions">
                     <Link className="text-link" to={`/updates/${announcement.slug}`}>
-                      Read update <ArrowUpRight size={13} />
+                      Read More <ArrowUpRight size={13} />
                     </Link>
                     {announcement.external_url && (
-                      <a className="text-link" href={announcement.external_url} target="_blank" rel="noreferrer">
-                        External link <ArrowUpRight size={13} />
+                      <a className="text-link" href={announcement.external_url} target="_blank" rel="noopener noreferrer">
+                        {announcement.slug === "explore-aws-builder-center" ? "Visit AWS Builder Center" : "External link"}
+                        <ArrowUpRight size={13} />
                       </a>
                     )}
                   </div>

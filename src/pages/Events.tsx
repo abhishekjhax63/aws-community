@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, CalendarDays, Clock, ImageOff, MapPin } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Clock, ImageOff, MapPin, Users } from "lucide-react";
 import { ErrorState, LoadingState, PageHero } from "../components/Page";
 import Reveal from "../components/Reveal";
 import { getEvents } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useDocumentTitle } from "../lib/hooks";
-import { formatDate, formatDateTime, humanizeStatus } from "../lib/format";
+import { formatDate, humanizeStatus } from "../lib/format";
+import { eventPhotoFallback } from "../data/photos";
 import { eventCategories } from "../data/content";
 import type { CommunityEvent } from "../lib/types";
 
@@ -19,11 +20,54 @@ const STATUS_FILTERS = [
 
 function matchesStatus(event: CommunityEvent, filterId: string, now: number) {
   if (filterId === "all") return true;
-  if (filterId === "upcoming") return new Date(event.starts_at).getTime() >= now;
+  if (filterId === "upcoming") return Boolean(event.starts_at && new Date(event.starts_at).getTime() >= now);
   if (filterId === "completed") {
-    return event.registration_status === "completed" || new Date(event.starts_at).getTime() < now;
+    return event.registration_status === "completed" || Boolean(event.starts_at && new Date(event.starts_at).getTime() < now);
   }
   return event.registration_status === filterId;
+}
+
+function isPastEvent(event: CommunityEvent, now: number) {
+  return event.registration_status === "completed" ||
+    Boolean(event.starts_at && new Date(event.starts_at).getTime() < now);
+}
+
+function EventCard({ event, index, past }: { event: CommunityEvent; index: number; past: boolean }) {
+  const coverImage = event.cover_image_url || eventPhotoFallback(event.title)?.media_url;
+  return (
+    <Reveal className="event-card" delay={(index % 3) * 60}>
+      <Link className="event-image" to={`/events/${event.slug}`}>
+        {coverImage ? (
+          <img src={coverImage} alt={`${event.title} event photograph`} loading="lazy" />
+        ) : (
+          <span className="event-image-empty">
+            <ImageOff size={26} />
+            {past && <span className="event-image-note">PHOTO TO BE ADDED</span>}
+          </span>
+        )}
+        <span className="event-image-date">{event.starts_at ? formatDate(event.starts_at) : "Date to be confirmed"}</span>
+      </Link>
+      <div className="event-card-body">
+        <div className="event-meta">
+          <span>{event.category}</span>
+          <span className={`status-badge status-${past ? "completed" : event.registration_status}`}>
+            {past ? "Past Event" : humanizeStatus(event.registration_status)}
+          </span>
+        </div>
+        <h3><Link to={`/events/${event.slug}`}>{event.title}</Link></h3>
+        <p>{event.short_description}</p>
+        <div className="event-facts">
+          {event.event_format && <span>{event.event_format}</span>}
+          {event.attendance_note && <span><Users size={12} /> {event.attendance_note}</span>}
+          {event.starts_at && <span><Clock size={12} /> {formatDate(event.starts_at)}</span>}
+          {event.venue && <span><MapPin size={12} /> {event.venue}</span>}
+        </div>
+        <Link className="text-link event-arrow" to={`/events/${event.slug}`}>
+          View event details <ArrowUpRight size={14} />
+        </Link>
+      </div>
+    </Reveal>
+  );
 }
 
 export default function Events() {
@@ -39,10 +83,17 @@ export default function Events() {
     return Array.from(new Set([...eventCategories, ...fromData]));
   }, [events]);
 
-  const visible = events.filter(
-    (event) =>
-      matchesStatus(event, status, now) && (category === "all" || event.category === category),
+  const past = events.filter((event) =>
+    isPastEvent(event, now) &&
+    (status === "all" || status === "completed") &&
+    (category === "all" || event.category === category),
   );
+  const current = events.filter((event) =>
+    !isPastEvent(event, now) &&
+    matchesStatus(event, status, now) &&
+    (category === "all" || event.category === category),
+  );
+  const hasVisibleEvents = past.length > 0 || current.length > 0;
 
   return (
     <>
@@ -85,7 +136,7 @@ export default function Events() {
           <LoadingState label="Loading events" />
         ) : error ? (
           <ErrorState message={error} />
-        ) : visible.length === 0 ? (
+        ) : !hasVisibleEvents ? (
           <div className="page-state page-state-empty">
             <span className="empty-overline">NO EVENTS IN THIS VIEW</span>
             <h3>Nothing here just yet.</h3>
@@ -95,47 +146,31 @@ export default function Events() {
             </Link>
           </div>
         ) : (
-          <div className="event-grid">
-            {visible.map((event, index) => (
-              <Reveal className="event-card" key={event.id} delay={(index % 3) * 60}>
-                <Link className="event-image" to={`/events/${event.slug}`}>
-                  {event.cover_image_url ? (
-                    <img src={event.cover_image_url} alt="" loading="lazy" />
-                  ) : (
-                    <span className="event-image-empty">
-                      <ImageOff size={26} />
-                    </span>
-                  )}
-                  <span className="event-image-date">{formatDate(event.starts_at)}</span>
-                </Link>
-                <div className="event-card-body">
-                  <div className="event-meta">
-                    <span>{event.category}</span>
-                    <span className={`status-badge status-${event.registration_status}`}>
-                      {humanizeStatus(event.registration_status)}
-                    </span>
-                  </div>
-                  <h3>
-                    <Link to={`/events/${event.slug}`}>{event.title}</Link>
-                  </h3>
-                  <p>{event.short_description}</p>
-                  <div className="event-facts">
-                    <span>
-                      <Clock size={12} /> {formatDateTime(event.starts_at)}
-                    </span>
-                    {event.venue && (
-                      <span>
-                        <MapPin size={12} /> {event.venue}
-                      </span>
-                    )}
-                  </div>
-                  <Link className="text-link event-arrow" to={`/events/${event.slug}`}>
-                    View event details <ArrowUpRight size={14} />
-                  </Link>
+          <>
+            {current.length > 0 && (
+              <section className="event-group" aria-labelledby="upcoming-events-title">
+                <div className="event-group-heading">
+                  <span className="eyebrow">WHAT'S NEXT</span>
+                  <h2 id="upcoming-events-title">Upcoming events</h2>
                 </div>
-              </Reveal>
-            ))}
-          </div>
+                <div className="event-grid">
+                  {current.map((event, index) => <EventCard key={event.id} event={event} index={index} past={false} />)}
+                </div>
+              </section>
+            )}
+            {past.length > 0 && (
+              <section className="event-group past-event-group" aria-labelledby="past-events-title">
+                <div className="event-group-heading">
+                  <span className="eyebrow">BUILT TOGETHER</span>
+                  <h2 id="past-events-title">Past events</h2>
+                  <p>Workshops and build sessions from the community archive.</p>
+                </div>
+                <div className="event-grid">
+                  {past.map((event, index) => <EventCard key={event.id} event={event} index={index} past />)}
+                </div>
+              </section>
+            )}
+          </>
         )}
 
         <div className="members-foot">

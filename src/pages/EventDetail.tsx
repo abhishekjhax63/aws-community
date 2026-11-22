@@ -6,19 +6,20 @@ import {
   ArrowUpRight,
   CalendarDays,
   Check,
-  Clock,
   MapPin,
   Ticket,
   Users,
 } from "lucide-react";
 import { ErrorState, LoadingState } from "../components/Page";
 import Reveal from "../components/Reveal";
-import { getEventBySlug, getMyProfile, registerForEvent } from "../lib/api";
+import ResponsivePhoto from "../components/ResponsivePhoto";
+import { eventPhotoFallback, staticPhotos } from "../data/photos";
+import { getEventBySlug, getGallery, getMyProfile, registerForEvent } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import { useDocumentTitle } from "../lib/hooks";
 import { formatDate, formatDateTime, humanizeStatus } from "../lib/format";
-import type { CommunityEvent, StudentProfile } from "../lib/types";
+import type { CommunityEvent, GalleryItem, StudentProfile } from "../lib/types";
 
 type Status = "idle" | "sending" | "success" | "error";
 
@@ -26,6 +27,7 @@ export default function EventDetail() {
   const { slug = "" } = useParams();
   const { session } = useAuth();
   const { data, loading, error } = useAsync<CommunityEvent>((signal) => getEventBySlug(slug, signal), [slug]);
+  const { data: gallery = [] } = useAsync<GalleryItem[]>((signal) => getGallery(signal), []);
   useDocumentTitle(data ? data.title : "Event details");
 
   const [showForm, setShowForm] = useState(false);
@@ -96,15 +98,29 @@ export default function EventDetail() {
   }
 
   const event = data;
+  const eventPhotos = (gallery ?? []).filter((item) => item.event_id === event.id && item.media_type === "image");
+  const coverImage = event.cover_image_url || eventPhotoFallback(event.title)?.media_url || null;
+  if (event.title.toLowerCase().includes("prompt2 pixel")) {
+    const existingUrls = new Set(eventPhotos.map((item) => item.media_url));
+    eventPhotos.push(
+      ...staticPhotos.filter(
+        (item) =>
+          item.category.toLowerCase().includes("prompt to pixel") &&
+          !existingUrls.has(item.media_url),
+      ),
+    );
+  }
+  const eventIsPast = event.registration_status === "completed" ||
+    Boolean(event.starts_at && new Date(event.starts_at).getTime() < Date.now());
   const seatsLeft =
     event.capacity === null ? null : Math.max(0, event.capacity);
-  const registrationOpen = event.registration_status === "registration_open";
+  const registrationOpen = event.registration_status === "registration_open" && !eventIsPast;
 
   return (
     <>
       <section className="event-hero">
-        {event.cover_image_url ? (
-          <img src={event.cover_image_url} alt="" className="event-hero-image" />
+        {coverImage ? (
+          <img src={coverImage} alt={`${event.title} event photograph`} className="event-hero-image" />
         ) : (
           <div className="event-hero-image placeholder" aria-hidden="true" />
         )}
@@ -115,16 +131,12 @@ export default function EventDetail() {
           </Link>
           <div className="event-hero-meta">
             <span>{event.category}</span>
-            <span className="status-chip">{humanizeStatus(event.registration_status)}</span>
+            <span className="status-chip">{eventIsPast ? "Past Event" : humanizeStatus(event.registration_status)}</span>
           </div>
           <h1>{event.title}</h1>
           <div className="event-hero-facts">
-            <span>
-              <CalendarDays size={14} /> {formatDate(event.starts_at)}
-            </span>
-            <span>
-              <Clock size={14} /> {formatDateTime(event.starts_at)}
-            </span>
+            {event.starts_at && <span><CalendarDays size={14} /> {formatDate(event.starts_at)}</span>}
+            {event.event_format && <span>{event.event_format}</span>}
             {event.venue && (
               <span>
                 <MapPin size={14} /> {event.venue}
@@ -143,6 +155,27 @@ export default function EventDetail() {
                 {event.full_description.split(/\n{2,}/).map((paragraph, index) => (
                   <p key={index}>{paragraph}</p>
                 ))}
+              </div>
+            )}
+
+            {eventPhotos.length > 0 && (
+              <div className="event-block event-gallery">
+                <h2>Event photographs</h2>
+                <div className="event-gallery-grid">
+                  {eventPhotos.map((photo) => (
+                    <figure key={photo.id}>
+                      <ResponsivePhoto
+                        src={photo.media_url}
+                        alt={photo.caption || photo.title || `${event.title} event photograph`}
+                        sizes="(max-width: 680px) 88vw, (max-width: 1024px) 44vw, 360px"
+                        loading="lazy"
+                      />
+                      {(photo.title || photo.caption) && (
+                        <figcaption>{photo.caption || photo.title}</figcaption>
+                      )}
+                    </figure>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -192,7 +225,7 @@ export default function EventDetail() {
               <dl>
                 <div>
                   <dt>STARTS</dt>
-                  <dd>{formatDateTime(event.starts_at)}</dd>
+                  <dd>{event.starts_at ? formatDateTime(event.starts_at) : "Date to be confirmed"}</dd>
                 </div>
                 {event.ends_at && (
                   <div>
@@ -204,6 +237,18 @@ export default function EventDetail() {
                   <div>
                     <dt>VENUE</dt>
                     <dd>{event.venue}</dd>
+                  </div>
+                )}
+                {event.event_format && (
+                  <div>
+                    <dt>FORMAT</dt>
+                    <dd>{event.event_format}</dd>
+                  </div>
+                )}
+                {event.attendance_note && (
+                  <div>
+                    <dt>ATTENDANCE</dt>
+                    <dd>{event.attendance_note}</dd>
                   </div>
                 )}
                 {event.eligibility && (
@@ -224,7 +269,7 @@ export default function EventDetail() {
                 )}
                 <div>
                   <dt>STATUS</dt>
-                  <dd>{humanizeStatus(event.registration_status)}</dd>
+                  <dd>{eventIsPast ? "Past Event" : humanizeStatus(event.registration_status)}</dd>
                 </div>
               </dl>
 
@@ -240,7 +285,7 @@ export default function EventDetail() {
                 </button>
               ) : (
                 <button className="button event-register-button disabled" type="button" disabled>
-                  Registration closed
+                  {eventIsPast ? "Event completed" : "Registration closed"}
                 </button>
               )}
               {!session && registrationOpen && (

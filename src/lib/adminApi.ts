@@ -179,3 +179,30 @@ export function adminUpdateSetting(key: string, value: unknown, isPublic: boolea
     body: JSON.stringify({ value, is_public: isPublic }),
   }).then((result) => result.data);
 }
+
+export async function adminUploadMedia(file: File) {
+  const token = getAdminToken();
+  const form = new FormData();
+  form.append("file", file);
+  const response = await fetch("/api/admin/media", {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (response.status === 401 || response.status === 403) {
+    setAdminToken(null);
+    throw new AdminSessionError("Your admin session has ended. Please sign in again.");
+  }
+  const payload = (await response.json().catch(() => null)) as
+    | { path: string; previewUrl: string; message?: string }
+    | null;
+  if (!response.ok || !payload) {
+    throw new Error(payload?.message || "Could not upload this image.");
+  }
+  return payload;
+}
+
+export function adminMediaPreview(path: string) {
+  const query = new URLSearchParams({ path });
+  return adminRequest<{ url: string }>(`/api/admin/media/preview?${query}`).then((result) => result.url);
+}

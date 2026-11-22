@@ -149,12 +149,14 @@ const resourceSchemas = {
     title: z.string().trim().min(1).max(180),
     slug: z.string().trim().min(1).max(200),
     category: z.string().trim().min(1).max(100),
+    event_format: z.string().max(200).nullable().optional(),
+    attendance_note: z.string().max(120).nullable().optional(),
     cover_image_url: mediaReference.nullable().optional(),
     short_description: z.string().trim().min(1).max(500),
     full_description: z.string().max(12000).nullable().optional(),
     agenda: z.array(z.unknown()).max(50).optional(),
     speakers: z.array(z.unknown()).max(30).optional(),
-    starts_at: z.string().datetime(),
+    starts_at: z.string().datetime().nullable().optional(),
     ends_at: z.string().datetime().nullable().optional(),
     venue: z.string().max(300).nullable().optional(),
     meeting_details: z.string().max(1000).nullable().optional(),
@@ -187,6 +189,25 @@ const resourceSchemas = {
     is_published: z.boolean().optional(),
   }),
 } as const;
+
+const socialLinksSchema = z.array(z.object({
+  id: z.string().trim().min(1).max(80),
+  platform: z.string().trim().min(1).max(60),
+  handle: z.string().trim().min(1).max(160),
+  url: z.string().url().refine((value) => {
+    try {
+      return new URL(value).protocol === "https:";
+    } catch {
+      return false;
+    }
+  }),
+  order: z.number().int().min(1).max(1000),
+  enabled: z.boolean(),
+  kind: z.enum(["profile", "post"]).optional(),
+})).max(30).refine(
+  (links) => new Set(links.map((link) => link.id)).size === links.length,
+  "Social link identifiers must be unique.",
+);
 
 type ManagedResource = keyof typeof resourceSchemas;
 const validResources = Object.keys(resourceSchemas) as ManagedResource[];
@@ -281,7 +302,7 @@ app.get("/api/members", requireDatabase, async (_req, res) => {
 
 app.get("/api/events", requireDatabase, async (_req, res) => {
   const { data, error } = await adminClient.from("events")
-    .select("id,title,slug,category,cover_image_url,short_description,full_description,agenda,speakers,starts_at,ends_at,venue,eligibility,registration_deadline,capacity,registration_status,important_instructions")
+    .select("id,title,slug,category,event_format,attendance_note,cover_image_url,short_description,full_description,agenda,speakers,starts_at,ends_at,venue,eligibility,registration_deadline,capacity,registration_status,important_instructions")
     .eq("is_published", true).order("starts_at", { ascending: true });
   if (error) return res.status(500).json({ message: "Could not load published events." });
   const signedData = await Promise.all((data ?? []).map(async (event: Record<string, unknown>) => ({
@@ -319,7 +340,7 @@ app.get("/api/announcements", requireDatabase, async (_req, res) => {
 
 app.get("/api/events/:slug", requireDatabase, async (req, res) => {
   const { data, error } = await adminClient.from("events")
-    .select("id,title,slug,category,cover_image_url,short_description,full_description,agenda,speakers,starts_at,ends_at,venue,eligibility,registration_deadline,capacity,registration_status,important_instructions")
+    .select("id,title,slug,category,event_format,attendance_note,cover_image_url,short_description,full_description,agenda,speakers,starts_at,ends_at,venue,eligibility,registration_deadline,capacity,registration_status,important_instructions")
     .eq("slug", req.params.slug).eq("is_published", true).maybeSingle();
   if (error) return res.status(500).json({ message: "Could not load this event." });
   if (!data) return res.status(404).json({ message: "This event could not be found." });
@@ -649,6 +670,9 @@ app.put("/api/admin/settings/:key", async (req, res) => {
   if (!parsed.success || !/^[a-z][a-z0-9_]{1,63}$/.test(req.params.key)) {
     return res.status(400).json({ message: "Please provide a valid setting." });
   }
+  if (req.params.key === "social_links" && !socialLinksSchema.safeParse(parsed.data.value).success) {
+    return res.status(400).json({ message: "Please provide valid HTTPS social links." });
+  }
   const { data, error } = await adminClient.from("site_settings").upsert({
     key: req.params.key,
     ...parsed.data,
@@ -682,7 +706,25 @@ app.post("/api/admin/media", receiveMedia, async (req, res) => {
     upsert: false,
   });
   if (error) return res.status(500).json({ message: "Could not upload this media. Check the storage setup." });
-  return res.status(201).json({ path, mediaType: req.file.mimetype.startsWith("video/") ? "video" : "image" });
+  const { data: preview, error: previewError } = await adminClient.storage
+    .from("community-media")
+    .createSignedUrl(path, 60 * 60);
+  if (previewError) return res.status(500).json({ message: "The image uploaded, but its preview could not be created." });
+  return res.status(201).json({
+    path,
+    previewUrl: preview.signedUrl,
+    mediaType: req.file.mimetype.startsWith("video/") ? "video" : "image",
+  });
+});
+
+app.get("/api/admin/media/preview", async (req, res) => {
+  const path = typeof req.query.path === "string" ? req.query.path.trim() : "";
+  if (!path || path.startsWith("/") || path.includes("..") || /^https?:\/\//i.test(path)) {
+    return res.status(400).json({ message: "Choose a valid uploaded media path." });
+  }
+  const url = await signMedia(path);
+  if (!url) return res.status(404).json({ message: "The uploaded image preview is unavailable." });
+  return res.json({ url });
 });
 
 app.get("/api/admin/:resource", async (req, res) => {
@@ -698,6 +740,12 @@ app.post("/api/admin/:resource", async (req, res) => {
   if (!validResources.includes(resource)) return res.status(404).json({ message: "Unknown management resource." });
   const parsed = resourceSchemas[resource].safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ message: "Please check the submitted fields.", issues: parsed.error.issues });
+  if (resource === "events") {
+    const event = resourceSchemas.events.safeParse(parsed.data);
+    if (event.success && event.data.is_published && !event.data.starts_at) {
+      return res.status(400).json({ message: "Confirm the event date before publishing it." });
+    }
+  }
   const { data, error } = await adminClient.from(resource).insert(parsed.data).select().single();
   if (error) return res.status(400).json({ message: "Could not create this item." });
   await adminClient.from("activity_logs").insert({
@@ -715,6 +763,20 @@ app.patch("/api/admin/:resource/:id", async (req, res) => {
   const parsed = resourceSchemas[resource].partial().safeParse(req.body);
   if (!parsed.success || Object.keys(parsed.data ?? {}).length === 0) {
     return res.status(400).json({ message: "Please submit at least one valid field." });
+  }
+  if (resource === "events") {
+    const event = resourceSchemas.events.partial().safeParse(parsed.data);
+    if (event.success && event.data.is_published) {
+      let startsAt = event.data.starts_at;
+      if (!Object.prototype.hasOwnProperty.call(event.data, "starts_at")) {
+        const existing = await adminClient.from("events").select("starts_at").eq("id", req.params.id).maybeSingle();
+        if (existing.error) return res.status(500).json({ message: "Could not verify the saved event date." });
+        startsAt = existing.data?.starts_at ?? null;
+      }
+      if (!startsAt) {
+        return res.status(400).json({ message: "Confirm the event date before publishing it." });
+      }
+    }
   }
   const { data, error } = await adminClient.from(resource)
     .update({ ...parsed.data, updated_at: new Date().toISOString() })

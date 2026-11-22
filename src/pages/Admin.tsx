@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Download, LogOut, Plus, RefreshCw, Save, Search, Trash2, X } from "lucide-react";
 import { ErrorState, LoadingState } from "../components/Page";
@@ -6,6 +6,7 @@ import Reveal from "../components/Reveal";
 import { suggestionCategories } from "../data/content";
 import { useDocumentTitle } from "../lib/hooks";
 import { formatDateTime, humanizeStatus } from "../lib/format";
+import { DEFAULT_SOCIAL_LINKS, type CommunitySocialLink } from "../lib/socialLinks";
 import type { Suggestion } from "../lib/types";
 import {
   AdminSessionError,
@@ -14,6 +15,7 @@ import {
   adminDownloadRegistrationsCsv,
   adminList,
   adminLogin,
+  adminMediaPreview,
   adminOverview,
   adminRegistrations,
   adminSettings,
@@ -22,6 +24,7 @@ import {
   adminUpdateRegistrationStatus,
   adminUpdateSetting,
   adminUpdateSuggestion,
+  adminUploadMedia,
   getAdminToken,
   setAdminToken,
   type AdminOverview,
@@ -147,13 +150,13 @@ function AdminDashboard({ onSessionEnd }: { onSessionEnd: () => void }) {
 }
 
 function useSessionGuard(onSessionEnd: () => void) {
-  return (err: unknown) => {
+  return useCallback((err: unknown) => {
     if (err instanceof AdminSessionError) {
       onSessionEnd();
       return true;
     }
     return false;
-  };
+  }, [onSessionEnd]);
 }
 
 /* --------------------------------------------------------------- overview */
@@ -465,7 +468,7 @@ function RegistrationsPanel({ onSessionEnd }: { onSessionEnd: () => void }) {
 
 /* ---------------------------------------------------- generic resources */
 
-type FieldType = "text" | "textarea" | "number" | "checkbox" | "select" | "datetime" | "json" | "csv";
+type FieldType = "text" | "textarea" | "number" | "checkbox" | "select" | "datetime" | "json" | "csv" | "media";
 type Field = {
   name: string;
   label: string;
@@ -520,9 +523,11 @@ const EVENT_CONFIG: ResourceConfig = {
     { name: "title", label: "Title", type: "text", required: true },
     { name: "slug", label: "Slug", type: "text", required: true },
     { name: "category", label: "Category", type: "text", required: true },
+    { name: "event_format", label: "Event format", type: "text" },
+    { name: "attendance_note", label: "Approximate attendance", type: "text" },
     { name: "short_description", label: "Short description", type: "textarea", required: true },
     { name: "full_description", label: "Full description", type: "textarea" },
-    { name: "starts_at", label: "Starts at", type: "datetime", required: true },
+    { name: "starts_at", label: "Starts at (confirm year before publishing)", type: "datetime" },
     { name: "ends_at", label: "Ends at", type: "datetime" },
     { name: "venue", label: "Venue", type: "text" },
     { name: "eligibility", label: "Eligibility", type: "textarea" },
@@ -535,7 +540,7 @@ const EVENT_CONFIG: ResourceConfig = {
       options: ["upcoming", "registration_open", "registration_closed", "completed", "cancelled"],
     },
     { name: "important_instructions", label: "Important instructions", type: "textarea" },
-    { name: "cover_image_url", label: "Banner URL or media path", type: "text" },
+    { name: "cover_image_url", label: "Event cover photograph", type: "media" },
     { name: "agenda", label: "Agenda (JSON array)", type: "json" },
     { name: "speakers", label: "Speakers (JSON array)", type: "json" },
     { name: "is_published", label: "Published on the site", type: "checkbox" },
@@ -553,7 +558,7 @@ const GALLERY_CONFIG: ResourceConfig = {
   ],
   fields: [
     { name: "media_type", label: "Media type", type: "select", options: ["image", "video"], required: true },
-    { name: "media_url", label: "Media URL or path", type: "text", required: true },
+    { name: "media_url", label: "Event photograph", type: "media", required: true },
     { name: "thumbnail_url", label: "Thumbnail URL or path", type: "text" },
     { name: "title", label: "Title", type: "text" },
     { name: "caption", label: "Caption", type: "textarea" },
@@ -579,7 +584,7 @@ const ANNOUNCEMENT_CONFIG: ResourceConfig = {
     { name: "category", label: "Category", type: "text", required: true },
     { name: "priority", label: "Priority", type: "select", options: ["normal", "important"] },
     { name: "external_url", label: "External link", type: "text" },
-    { name: "cover_image_url", label: "Image URL or media path", type: "text" },
+    { name: "cover_image_url", label: "Announcement image", type: "media" },
     { name: "published_at", label: "Publish at", type: "datetime" },
     { name: "is_published", label: "Published on the site", type: "checkbox" },
   ],
@@ -588,6 +593,9 @@ const ANNOUNCEMENT_CONFIG: ResourceConfig = {
 function toFormValue(field: Field, raw: FormDataEntryValue | null) {
   if (field.type === "checkbox") return raw !== null;
   const value = typeof raw === "string" ? raw : "";
+  if (field.type === "media" && value === "") return null;
+  if (field.name === "event_id" && value === "") return null;
+  if (field.type === "datetime" && value === "") return null;
   if (value === "") return undefined;
   if (field.type === "number") return Number(value);
   if (field.type === "datetime") return new Date(value).toISOString();
@@ -615,6 +623,7 @@ function ResourcePanel({ config, onSessionEnd }: { config: ResourceConfig; onSes
   const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState("");
+  const [eventOptions, setEventOptions] = useState<Array<{ id: string; title: string }>>([]);
 
   function load() {
     setLoading(true);
@@ -628,6 +637,15 @@ function ResourcePanel({ config, onSessionEnd }: { config: ResourceConfig; onSes
   }
 
   useEffect(load, [config.key]);
+
+  useEffect(() => {
+    if (config.key !== "gallery") return;
+    adminList<{ id: string; title: string }>("events")
+      .then(setEventOptions)
+      .catch((err: unknown) => {
+        if (!handleError(err)) setError(err instanceof Error ? err.message : "Could not load events for the gallery.");
+      });
+  }, [config.key, handleError]);
 
   function openCreate() {
     setEditing(null);
@@ -645,6 +663,13 @@ function ResourcePanel({ config, onSessionEnd }: { config: ResourceConfig; onSes
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const body: Record<string, unknown> = {};
+    const missingMedia = config.fields.find(
+      (field) => field.type === "media" && field.required && !formData.get(field.name),
+    );
+    if (missingMedia) {
+      setFormError(`${missingMedia.label} is required.`);
+      return;
+    }
     try {
       config.fields.forEach((field) => {
         const value = toFormValue(field, formData.get(field.name));
@@ -740,7 +765,7 @@ function ResourcePanel({ config, onSessionEnd }: { config: ResourceConfig; onSes
             <form onSubmit={handleSubmit} key={editing ? String(editing.id) : "new"}>
               <div className="admin-editor-fields">
                 {config.fields.map((field) => (
-                  <label key={field.name} className={field.type === "textarea" || field.type === "json" ? "is-wide" : ""}>
+                  <label key={field.name} className={field.type === "textarea" || field.type === "json" || field.type === "media" ? "is-wide" : ""}>
                     <span>{field.label}</span>
                     {field.type === "textarea" || field.type === "json" ? (
                       <textarea
@@ -750,12 +775,25 @@ function ResourcePanel({ config, onSessionEnd }: { config: ResourceConfig; onSes
                         placeholder={field.placeholder}
                         defaultValue={fromRecord(field, editing) as string}
                       />
+                    ) : field.name === "event_id" && config.key === "gallery" ? (
+                      <select name={field.name} defaultValue={fromRecord(field, editing) as string}>
+                        <option value="">Not linked to an event</option>
+                        {eventOptions.map((event) => (
+                          <option key={event.id} value={event.id}>{event.title}</option>
+                        ))}
+                      </select>
                     ) : field.type === "select" ? (
                       <select name={field.name} defaultValue={(fromRecord(field, editing) as string) || field.options?.[0]}>
                         {field.options?.map((option) => <option key={option} value={option}>{option}</option>)}
                       </select>
                     ) : field.type === "checkbox" ? (
                       <input type="checkbox" name={field.name} defaultChecked={Boolean(fromRecord(field, editing))} />
+                    ) : field.type === "media" ? (
+                      <MediaUploadField
+                        field={field}
+                        initialValue={fromRecord(field, editing) as string}
+                        onSessionEnd={onSessionEnd}
+                      />
                     ) : (
                       <input
                         name={field.name}
@@ -780,6 +818,84 @@ function ResourcePanel({ config, onSessionEnd }: { config: ResourceConfig; onSes
         </div>
       ) : null}
     </section>
+  );
+}
+
+function MediaUploadField({
+  field,
+  initialValue,
+  onSessionEnd,
+}: {
+  field: Field;
+  initialValue: string;
+  onSessionEnd: () => void;
+}) {
+  const handleError = useSessionGuard(onSessionEnd);
+  const [value, setValue] = useState(initialValue);
+  const [preview, setPreview] = useState(
+    initialValue.startsWith("/") || /^https:\/\//i.test(initialValue) ? initialValue : "",
+  );
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!value || value.startsWith("/") || /^https:\/\//i.test(value)) return;
+    let active = true;
+    adminMediaPreview(value)
+      .then((url) => { if (active) setPreview(url); })
+      .catch(() => { if (active) setPreview(""); });
+    return () => { active = false; };
+  }, [value]);
+
+  async function upload(file?: File) {
+    if (!file) return;
+    setBusy(true);
+    setError("");
+    try {
+      const result = await adminUploadMedia(file);
+      setValue(result.path);
+      setPreview(result.previewUrl);
+    } catch (err) {
+      if (!handleError(err)) setError(err instanceof Error ? err.message : "Could not upload this image.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="admin-media-field">
+      <input type="hidden" name={field.name} value={value} />
+      {preview && <img className="admin-media-preview" src={preview} alt={`${field.label} preview`} />}
+      <div className="admin-media-actions">
+        <label className="button button-outline admin-media-picker">
+          {busy ? "UPLOADING…" : value ? "REPLACE IMAGE" : "UPLOAD IMAGE"}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            disabled={busy}
+            onChange={(event) => {
+              void upload(event.currentTarget.files?.[0]);
+              event.currentTarget.value = "";
+            }}
+          />
+        </label>
+        {value && (
+          <button
+            className="admin-media-remove"
+            type="button"
+            onClick={() => {
+              setValue("");
+              setPreview("");
+              setError("");
+            }}
+          >
+            <Trash2 size={13} /> Remove image
+          </button>
+        )}
+      </div>
+      {error && <span className="admin-media-error" role="alert">{error}</span>}
+      <small className="admin-muted">JPG, PNG or WebP · up to 50 MB · image descriptions go in the caption/alt text field.</small>
+    </div>
   );
 }
 
@@ -832,12 +948,156 @@ function SettingsPanel({ onSessionEnd }: { onSessionEnd: () => void }) {
         <p className="admin-muted">No settings stored yet.</p>
       ) : (
         <div className="settings-list">
-          {rows.map((row) => (
+          {rows.filter((row) => row.key !== "social_links").map((row) => (
             <SettingRow key={row.key} row={row} onSave={save} />
           ))}
         </div>
       )}
+      <SocialSettingsEditor
+        initialValue={rows.find((row) => row.key === "social_links")?.value}
+        onSessionEnd={onSessionEnd}
+        onSaved={(updated) => setRows((current) => [
+          ...current.filter((row) => row.key !== updated.key),
+          updated,
+        ])}
+      />
     </section>
+  );
+}
+
+function SocialSettingsEditor({
+  initialValue,
+  onSessionEnd,
+  onSaved,
+}: {
+  initialValue: unknown;
+  onSessionEnd: () => void;
+  onSaved: (setting: AdminSetting) => void;
+}) {
+  const handleError = useSessionGuard(onSessionEnd);
+  const [links, setLinks] = useState<CommunitySocialLink[]>(() => {
+    if (Array.isArray(initialValue)) return initialValue as CommunitySocialLink[];
+    return DEFAULT_SOCIAL_LINKS.map((link) => ({ ...link }));
+  });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (Array.isArray(initialValue)) setLinks(initialValue as CommunitySocialLink[]);
+  }, [initialValue]);
+
+  async function persist() {
+    const normalized = links.map((link, index) => ({
+      ...link,
+      id: link.id.trim() || `${link.platform.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${index + 1}`,
+      platform: link.platform.trim(),
+      handle: link.handle.trim(),
+      url: link.url.trim(),
+      order: Number.isFinite(Number(link.order)) ? Number(link.order) : index + 1,
+    }));
+    if (normalized.some((link) => !link.platform || !link.handle || !link.url)) {
+      setError("Complete the platform, handle and profile URL for each link, or remove the unfinished row.");
+      return;
+    }
+    if (normalized.some((link) => {
+      try {
+        return new URL(link.url).protocol !== "https:";
+      } catch {
+        return true;
+      }
+    })) {
+      setError("Social links must use valid HTTPS URLs.");
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setSaved(false);
+    try {
+      const updated = await adminUpdateSetting("social_links", normalized, true);
+      setLinks(normalized);
+      onSaved(updated);
+      setSaved(true);
+    } catch (err) {
+      if (!handleError(err)) setError(err instanceof Error ? err.message : "Could not save social links.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="social-admin">
+      <div className="admin-section-head">
+        <div>
+          <h3>Community social links</h3>
+          <span className="admin-muted">Only enabled, verified HTTPS destinations appear publicly.</span>
+        </div>
+        <button
+          className="button button-outline"
+          type="button"
+          onClick={() => {
+            setLinks((current) => [...current, {
+              id: `social-${Date.now()}`,
+              platform: "",
+              handle: "",
+              url: "",
+              order: current.length + 1,
+              enabled: true,
+            }]);
+            setSaved(false);
+          }}
+        >
+          <Plus size={14} /> Add link
+        </button>
+      </div>
+      {links.length === 0 ? (
+        <p className="admin-muted">No social links configured. Add a verified community profile above.</p>
+      ) : (
+        <div className="social-admin-list">
+          {links.map((link, index) => (
+            <div className="social-admin-row" key={link.id || index}>
+              <label>
+                <span>Platform</span>
+                <input value={link.platform} onChange={(event) => setLinks((items) => items.map((item, i) => i === index ? { ...item, platform: event.target.value } : item))} />
+              </label>
+              <label>
+                <span>Handle or descriptor</span>
+                <input value={link.handle} onChange={(event) => setLinks((items) => items.map((item, i) => i === index ? { ...item, handle: event.target.value } : item))} />
+              </label>
+              <label className="is-wide">
+                <span>Profile URL (HTTPS)</span>
+                <input type="url" value={link.url} onChange={(event) => setLinks((items) => items.map((item, i) => i === index ? { ...item, url: event.target.value } : item))} />
+              </label>
+              <label>
+                <span>Display order</span>
+                <input type="number" min="1" value={link.order} onChange={(event) => setLinks((items) => items.map((item, i) => i === index ? { ...item, order: Number(event.target.value) } : item))} />
+              </label>
+              <label className="social-admin-enabled">
+                <span>Enabled</span>
+                <input type="checkbox" checked={link.enabled} onChange={(event) => setLinks((items) => items.map((item, i) => i === index ? { ...item, enabled: event.target.checked } : item))} />
+              </label>
+              <button
+                className="social-admin-remove"
+                type="button"
+                aria-label={`Remove ${link.platform || "social link"}`}
+                onClick={() => {
+                  setLinks((items) => items.filter((_, i) => i !== index));
+                  setSaved(false);
+                }}
+              >
+                <Trash2 size={14} /> Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {error && <p className="form-message error" role="alert">{error}</p>}
+      {saved && <p className="form-message success" role="status">Social links saved.</p>}
+      <button className="button button-orange" type="button" onClick={() => void persist()} disabled={busy}>
+        <Save size={14} /> {busy ? "SAVING…" : "SAVE SOCIAL LINKS"}
+      </button>
+    </div>
   );
 }
 

@@ -55,8 +55,10 @@ export default function UpdateDetail() {
             <CalendarDays size={14} /> {update.published_at ? formatDate(update.published_at) : "Community note"}
           </span>
           {update.external_url && (
-            <a className="text-link" href={update.external_url} target="_blank" rel="noreferrer">
-              <Share2 size={13} /> Open external link <ArrowUpRight size={12} />
+            <a className="text-link" href={update.external_url} target="_blank" rel="noopener noreferrer">
+              <Share2 size={13} />
+              {update.slug === "explore-aws-builder-center" ? "Visit AWS Builder Center" : "Open external link"}
+              <ArrowUpRight size={12} />
             </a>
           )}
         </div>
@@ -64,7 +66,12 @@ export default function UpdateDetail() {
 
       {update.cover_image_url && (
         <Reveal className="update-detail-image" variant="blur" delay={100}>
-          <img src={update.cover_image_url} alt="" />
+          <img
+            src={update.cover_image_url}
+            alt={update.slug === "explore-aws-builder-center"
+              ? "Community-created AWS Builder Center resource feature; not official AWS artwork."
+              : ""}
+          />
         </Reveal>
       )}
 
@@ -78,9 +85,13 @@ export default function UpdateDetail() {
         <Link className="text-link" to="/updates">
           <ArrowLeft size={14} /> Back to all updates
         </Link>
-        <Link className="text-link" to="/events">
-          Explore events <ArrowUpRight size={14} />
-        </Link>
+        {update.external_url && (
+          <a className="button button-orange" href={update.external_url} target="_blank" rel="noopener noreferrer">
+            {update.slug === "explore-aws-builder-center" ? "Visit AWS Builder Center" : "Open resource"}
+            <ArrowUpRight size={14} />
+          </a>
+        )}
+        <Link className="text-link" to="/events">Explore events <ArrowUpRight size={14} /></Link>
       </div>
     </article>
   );

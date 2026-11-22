@@ -11,6 +11,7 @@ import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
 import Gallery from "./pages/Gallery";
 import Updates from "./pages/Updates";
+import Socials from "./pages/Socials";
 import UpdateDetail from "./pages/UpdateDetail";
 import Learning from "./pages/Learning";
 import Suggestions from "./pages/Suggestions";
@@ -91,6 +92,7 @@ export default function App() {
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/updates" element={<Updates />} />
             <Route path="/updates/:slug" element={<UpdateDetail />} />
+            <Route path="/socials" element={<Socials />} />
             <Route path="/learning" element={<Learning />} />
             <Route path="/suggestions" element={<Suggestions />} />
             <Route path="/auth/signup" element={<Signup />} />

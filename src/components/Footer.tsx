@@ -11,6 +11,7 @@ const exploreLinks = [
   { to: "/events", label: "Events" },
   { to: "/gallery", label: "Gallery" },
   { to: "/updates", label: "Updates" },
+  { to: "/socials", label: "Social media" },
   { to: "/suggestions", label: "Suggestion box" },
 ];
 

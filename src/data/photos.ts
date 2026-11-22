@@ -17,6 +17,13 @@ export const staticPhotos: GalleryItem[] = [
   { id: "ptp-08", event_id: null, media_type: "image", media_url: "/assets/gallery/prompt-to-pixel-08-ceremony.jpeg", thumbnail_url: null, title: "Trophy presentation", caption: "Trophy being presented to the Prompt to Pixel competition winner.", category: "Prompt to Pixel" },
 ];
 
+export function eventPhotoFallback(title: string): GalleryItem | undefined {
+  if (title.toLowerCase().includes("prompt2 pixel")) {
+    return staticPhotos.find((item) => item.category.toLowerCase().includes("prompt to pixel"));
+  }
+  return undefined;
+}
+
 /** Admin-uploaded gallery items with the bundled photographs merged in (deduped by URL). */
 export function mergePhotos(dbItems: GalleryItem[]): GalleryItem[] {
   const seen = new Set(dbItems.map((item) => item.media_url));

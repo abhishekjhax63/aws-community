@@ -13,12 +13,14 @@ export type CommunityEvent = {
   title: string;
   slug: string;
   category: string;
+  event_format: string | null;
+  attendance_note: string | null;
   cover_image_url: string | null;
   short_description: string;
   full_description: string | null;
   agenda: AgendaItem[];
   speakers: Speaker[];
-  starts_at: string;
+  starts_at: string | null;
   ends_at: string | null;
   venue: string | null;
   eligibility: string | null;

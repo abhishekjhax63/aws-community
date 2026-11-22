@@ -17,6 +17,7 @@ import LogoAssembly from "../components/LogoAssembly";
 import PhotoSlideshow from "../components/PhotoSlideshow";
 import SectionMarquee from "../components/SectionMarquee";
 import TeamCarousel from "../components/TeamCarousel";
+import SocialMediaSection from "../components/SocialMediaSection";
 import SuggestionForm from "../components/SuggestionForm";
 import {
   getAnnouncements,
@@ -83,7 +84,8 @@ export default function Home() {
 
   const now = Date.now();
   const featured =
-    events.find((event) => new Date(event.starts_at).getTime() >= now) ?? events[0] ?? null;
+    events.find((event) => event.starts_at && new Date(event.starts_at).getTime() >= now) ?? null;
+  const featuredStart = featured?.starts_at ?? "";
   const builders = members.filter((member) => member.full_name.toLowerCase() !== "ayush kumar").slice(0, 3);
   const latestUpdates = announcements.slice(0, 3);
 
@@ -202,9 +204,9 @@ export default function Home() {
             <div className="feature-event-body">
               <div className="event-meta">
                 <span>{featured.registration_status.replace(/_/g, " ")}</span>
-                {daysUntil(featured.starts_at) !== null && (
+                {daysUntil(featuredStart) !== null && (
                   <span>
-                    {Math.max(0, daysUntil(featured.starts_at) ?? 0)} DAYS TO GO
+                    {Math.max(0, daysUntil(featuredStart) ?? 0)} DAYS TO GO
                   </span>
                 )}
               </div>
@@ -212,7 +214,7 @@ export default function Home() {
               <p>{featured.short_description}</p>
               <div className="feature-facts">
                 <span>
-                  <CalendarDays size={14} /> {formatDate(featured.starts_at)}
+                  <CalendarDays size={14} /> {formatDate(featuredStart)}
                 </span>
                 {featured.venue && (
                   <span>
@@ -221,7 +223,7 @@ export default function Home() {
                 )}
               </div>
               {featured.registration_status === "registration_open" && (
-                <CountdownPill target={featured.starts_at} />
+                <CountdownPill target={featuredStart} />
               )}
               <Link className="button button-orange" to={`/events/${featured.slug}`}>
                 View event <ArrowRight size={15} />
@@ -539,6 +541,7 @@ export default function Home() {
           PATNA · IN
         </span>
       </section>
+      <SocialMediaSection preview />
     </>
   );
 }
