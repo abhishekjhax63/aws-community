@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Play, Sparkles, X } from "lucide-react";
 import { ErrorState, LoadingState, PageHero } from "../components/Page";
+import ResponsivePhoto from "../components/ResponsivePhoto";
 import { getGallery } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useDocumentTitle } from "../lib/hooks";
@@ -105,7 +106,12 @@ export default function Gallery() {
                     </span>
                   </>
                 ) : (
-                  <img src={item.media_url} alt={item.caption || item.title || "Community gallery"} loading="lazy" />
+                  <ResponsivePhoto
+                    src={item.media_url}
+                    alt={item.caption || item.title || "Community gallery"}
+                    sizes="(max-width: 640px) 48vw, (max-width: 1024px) 32vw, 25vw"
+                    loading="lazy"
+                  />
                 )}
                 <span className="gallery-tile-caption">
                   <span>{item.category}</span>

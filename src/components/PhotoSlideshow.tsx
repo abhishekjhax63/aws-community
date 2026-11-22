@@ -8,6 +8,13 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
+import { useReducedMotion } from "framer-motion";
+import ResponsivePhoto from "./ResponsivePhoto";
+
+/* Rendered widths used to pick the right photograph size for each slot. */
+const PANEL_SIZES = "(max-width: 680px) 86vw, (max-width: 900px) 84vw, 52vw";
+const HERO_SIZES = "(max-width: 900px) 92vw, (max-width: 1400px) 40vw, 600px";
+const THUMB_SIZES = "(max-width: 680px) 22vw, (max-width: 900px) 23vw, 112px";
 
 export type SlidePhoto = { src: string; alt?: string };
 
@@ -153,7 +160,9 @@ function CompositionC({
   index,
   active,
   panel,
-}: CompositionProps) {
+  photos,
+  onSelect,
+}: CompositionProps & { photos: SlidePhoto[]; onSelect: (next: number) => void }) {
   return (
     <article className={`ed-slide ed-slide--c ${active ? "is-active" : ""}`} aria-hidden={!active}>
       <div className="ed-cell ed-cell--c-media">
@@ -164,6 +173,29 @@ function CompositionC({
       </div>
       <div className="ed-cell ed-cell--text">
         <EdText phrase={spec.phrase} num={pad(index + 1)} />
+      </div>
+      {/* Filmstrip: real photographs only. Clicking a thumbnail changes the
+          main slide; the active thumbnail is marked with an orange outline. */}
+      <div className="ed-film" role="group" aria-label="Choose a photograph">
+        {photos.map((photo, i) => (
+          <button
+            key={`${photo.src}-${i}`}
+            type="button"
+            className={`ed-film-thumb ${i === index ? "is-active" : ""}`}
+            aria-current={i === index}
+            aria-label={`Show photograph ${i + 1} of ${photos.length}`}
+            onClick={() => onSelect(i)}
+          >
+            <ResponsivePhoto
+              src={photo.src}
+              alt=""
+              sizes={THUMB_SIZES}
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+            />
+          </button>
+        ))}
       </div>
     </article>
   );
@@ -237,11 +269,11 @@ function EdText({ phrase, num }: { phrase: Phrase; num: string }) {
  * caption or graphic text is ever placed on top of an image, and the original
  * photographs are never filtered, tinted or annotated.
  *
- * Features: automatic advance, cinematic crossfade, per-composition entrance
- * transitions (scale reveal, horizontal slide, clip-path wipe, layered
- * movement), manual next/previous, pause/resume, an animated progress marker,
- * touch swipe, loading placeholders and a clean empty state when no
- * photographs exist.
+ * Features: viewport/tab/interaction-aware automatic advance, non-fading
+ * entrance transitions (horizontal slide, scale reveal, clip-path wipe,
+ * layered movement), a real-photograph filmstrip, manual next/previous,
+ * pause/resume, an animated progress marker, touch swipe, keyboard control,
+ * lazy image loading and a clean empty state when no photographs exist.
  */
 export default function PhotoSlideshow({
   photos,
@@ -255,10 +287,15 @@ export default function PhotoSlideshow({
   const count = photos.length;
   const dots = showDots ?? variant === "cinema";
   const isHero = variant === "hero";
+  const reduce = useReducedMotion() ?? false;
   const slides = useMemo(() => buildSlides(photos), [photos]);
 
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [inView, setInView] = useState(true);
+  const [tabHidden, setTabHidden] = useState(false);
+  const [engaged, setEngaged] = useState(false);
   const startX = useRef<number | null>(null);
 
   const go = useCallback(
@@ -269,13 +306,39 @@ export default function PhotoSlideshow({
     [count],
   );
 
+  // Advance automatically only while the slideshow is genuinely active: on
+  // screen, in a visible tab, not explicitly paused, not reduced-motion and not
+  // being interacted with. This stops the slides from fighting the visitor and
+  // keeps timers from running off-screen or in a background tab.
+  const autoplay = !paused && !reduce && !tabHidden && inView && !engaged && count > 1;
+
   // Automatic advance. Cleared and restarted on every change so manual
   // navigation also resets the timer.
   useEffect(() => {
-    if (paused || count <= 1) return;
+    if (!autoplay) return;
     const timer = window.setTimeout(() => go(index + 1), interval);
     return () => window.clearTimeout(timer);
-  }, [index, paused, count, interval, go]);
+  }, [index, autoplay, interval, go]);
+
+  // Pause while the slideshow is outside the visible viewport.
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { threshold: 0.4 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Pause while the browser tab is hidden.
+  useEffect(() => {
+    const onVisibility = () => setTabHidden(document.visibilityState === "hidden");
+    onVisibility();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
 
   // Keep the index in range if the photo list changes underneath us.
   useEffect(() => {
@@ -324,9 +387,10 @@ export default function PhotoSlideshow({
 
   const panel: PanelFactory = (photo, className, _reveal, _delay = 0, wipe = false) => {
     const img = (
-      <img
+      <ResponsivePhoto
         src={photo.src}
         alt={photo.alt ?? ""}
+        sizes={PANEL_SIZES}
         loading={index === 0 ? "eager" : "lazy"}
         decoding="async"
         draggable={false}
@@ -344,6 +408,7 @@ export default function PhotoSlideshow({
 
   return (
     <div
+      ref={rootRef}
       className={["photo-slideshow", `photo-slideshow-${variant}`, className].filter(Boolean).join(" ")}
       role="region"
       aria-roledescription="carousel"
@@ -355,15 +420,28 @@ export default function PhotoSlideshow({
       onPointerCancel={() => {
         startX.current = null;
       }}
+      onMouseEnter={() => setEngaged(true)}
+      onMouseLeave={() => setEngaged(false)}
+      onFocus={() => setEngaged(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setEngaged(false);
+      }}
     >
+      {!isHero && (
+        <>
+          <span className="ed-frame-corner ed-frame-corner--tr" aria-hidden="true" />
+          <span className="ed-frame-corner ed-frame-corner--bl" aria-hidden="true" />
+        </>
+      )}
       <div className="photo-stage">
         {isHero
           ? (
               <div key={photos[index].src} className="ed-slide ed-slide--hero is-active">
                 <div className="ed-panel ed-panel--hero">
-                  <img
+                  <ResponsivePhoto
                     src={photos[index].src}
                     alt={photos[index].alt ?? ""}
+                    sizes={HERO_SIZES}
                     loading={index === 0 ? "eager" : "lazy"}
                     decoding="async"
                     draggable={false}
@@ -376,7 +454,7 @@ export default function PhotoSlideshow({
               const key = `${spec.main.src}-${i}`;
               if (spec.layout === "a") return <CompositionA key={key} {...props} />;
               if (spec.layout === "b") return <CompositionB key={key} {...props} />;
-              if (spec.layout === "c") return <CompositionC key={key} {...props} />;
+              if (spec.layout === "c") return <CompositionC key={key} {...props} photos={photos} onSelect={go} />;
               return <CompositionD key={key} {...props} />;
             })}
       </div>
@@ -390,8 +468,8 @@ export default function PhotoSlideshow({
           </span>
           <span className="ed-bar-track" aria-hidden="true">
             <span
-              key={`${index}-${paused}`}
-              className={`ed-bar-fill ${paused ? "is-paused" : ""}`}
+              key={`${index}-${autoplay}`}
+              className={`ed-bar-fill ${autoplay ? "" : "is-paused"}`}
               style={{ animationDuration: `${interval}ms` }}
             />
           </span>
