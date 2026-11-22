@@ -17,6 +17,23 @@ export default function Layout() {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [pathname]);
 
+  // Keep a single canonical URL in the document head. Private areas
+  // (auth, profile, admin) are excluded so they are never advertised.
+  useEffect(() => {
+    const isPrivate = ["/auth", "/profile", "/admin"].some((prefix) => pathname.startsWith(prefix));
+    const existing = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (isPrivate) {
+      existing?.remove();
+      return;
+    }
+    const link = existing ?? document.createElement("link");
+    if (!existing) {
+      link.rel = "canonical";
+      document.head.appendChild(link);
+    }
+    link.href = `${window.location.origin}${pathname}`;
+  }, [pathname]);
+
   return (
     <SiteSettingsProvider>
       <ScrollProgress />

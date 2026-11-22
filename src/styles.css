@@ -263,7 +263,7 @@ button { color: inherit; }
 .team-carousel-tagline { margin: 7px 0 0; color: #cbd5e1; font-size: 12px; line-height: 1.6; }
 .team-carousel-controls { display: flex; gap: 10px; }
 .team-carousel-controls button {
-  width: 42px; height: 42px; display: grid; place-items: center;
+  width: 44px; height: 44px; display: grid; place-items: center;
   border: 1px solid #334155; background: transparent; color: #cbd5e1;
   cursor: pointer; transition: background .2s, border-color .2s, color .2s;
 }
@@ -335,13 +335,13 @@ button { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .section-marquee-track { animation: none; }
 }
-.people-footnote { margin-top: 23px; display: flex; align-items: center; justify-content: space-between; color: #8f98a1; font: 8px var(--mono); letter-spacing: .08em; }
+.people-footnote { margin-top: 23px; display: flex; align-items: center; justify-content: space-between; color: #64748b; font: 8px var(--mono); letter-spacing: .08em; }
 .people-footnote > span:last-child { display: flex; align-items: center; gap: 9px; color: #cbd5e1; letter-spacing: 0; font: 10px var(--body); }
 .people-footnote svg { color: var(--orange); }
 .member-directory { margin-top: 35px; padding-top: 17px; border-top: 1px solid #334155; }
 .member-directory-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; color: #94a3b8; font: 8px var(--mono); letter-spacing: .08em; }
 .member-directory-heading input { width: 190px; padding: 8px 9px; color: #f3f4f6; border: 1px solid #334155; background: var(--navy-secondary); outline: 0; font: 10px var(--body); }
-.member-directory-heading input::placeholder { color: #a0a6ac; }
+.member-directory-heading input::placeholder { color: #94a3b8; }
 .member-directory-heading input:focus { border-color: var(--orange); }
 .member-directory-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
 .member-card { padding: 12px; display: grid; grid-template-columns: 64px 1fr; gap: 13px; align-items: start; background: var(--navy-secondary); }
@@ -456,7 +456,7 @@ button { color: inherit; }
 .gallery-grid-full { grid-template-columns: repeat(3, 1fr); }
 .gallery-card { width: 100%; padding: 0; border: 0; text-align: left; cursor: pointer; appearance: none; }
 .gallery-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 32px; }
-.gallery-filters button { min-height: 34px; padding: 0 13px; border: 1px solid #e2e8f0; color: #64748b; background: transparent; font: 8px var(--mono); letter-spacing: .06em; cursor: pointer; }
+.gallery-filters button { min-height: 44px; padding: 0 13px; border: 1px solid #e2e8f0; color: #64748b; background: transparent; font: 8px var(--mono); letter-spacing: .06em; cursor: pointer; }
 .gallery-filters button:hover { border-color: #94a3b8; color: #1e293b; }
 .gallery-filters button.is-active { color: white; background: var(--navy); border-color: var(--navy); }
 .lightbox { position: relative; width: min(100%, 1000px); margin: auto; display: flex; flex-direction: column; background: #111827; }
@@ -529,7 +529,7 @@ button { color: inherit; }
 .contact-form label { display: block; margin: 20px 0 8px; color: #64748b; font: 8px var(--mono); letter-spacing: .08em; }
 .contact-form input, .contact-form textarea { width: 100%; border: 0; border-bottom: 1px solid #cbd5e1; border-radius: 0; outline: 0; padding: 8px 0 10px; background: transparent; color: #1e293b; font-size: 12px; resize: vertical; }
 .contact-form input:focus, .contact-form textarea:focus { border-color: #8f5a08; }
-.contact-form input::placeholder, .contact-form textarea::placeholder { color: #94a3b8; }
+.contact-form input::placeholder, .contact-form textarea::placeholder { color: #64748b; }
 .form-bottom { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-top: 17px; }
 .form-bottom > span { max-width: 205px; color: #64748b; font-size: 9px; line-height: 1.6; }
 .submit-button { display: inline-flex; align-items: center; gap: 15px; min-height: 39px; padding: 0 13px; color: white; background: var(--navy); border: 0; cursor: pointer; font: 8px var(--mono); letter-spacing: .05em; transition: background .2s ease; }
@@ -561,7 +561,7 @@ button { color: inherit; }
 .footer-column a:hover { color: white; }
 .footer-place { color: #94a3b8; font-size: 10px; line-height: 1.65; }
 .footer-socials { display: flex; gap: 8px; margin-top: 4px; }
-.footer-socials a, .footer-socials > span { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid #1e293b; color: #94a3b8; }
+.footer-socials a, .footer-socials > span { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid #1e293b; color: #94a3b8; }
 .footer-socials a:hover { background: var(--orange); border-color: var(--orange); color: #111827; }
 .footer-bottom { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-top: 38px; padding-top: 15px; border-top: 1px solid #334155; color: #94a3b8; font: 7px var(--mono); letter-spacing: .045em; }
 .footer-bottom a { display: inline-flex; align-items: center; gap: 5px; color: #cbd5e1; }
@@ -889,7 +889,7 @@ button { color: inherit; }
 .feature-event-media::after { content: ""; position: absolute; inset: 13px; z-index: 1; border: 1px solid rgba(255, 255, 255, 0.42); pointer-events: none; transition: inset .4s var(--ease-out), border-color .4s var(--ease-out); }
 .feature-event:hover .feature-event-media::after { inset: 9px; border-color: rgba(255, 153, 0, 0.75); }
 .feature-event-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
-.feature-event-placeholder { position: absolute; inset: 0; display: grid; place-items: center; color: #b8c2d0; background: #e2e8f0; }
+.feature-event-placeholder { position: absolute; inset: 0; display: grid; place-items: center; color: #64748b; background: #e2e8f0; }
 .feature-event-badge { position: absolute; top: 26px; left: 26px; padding: 6px 9px; color: #111827; background: var(--orange); font: 8px var(--mono); letter-spacing: .06em; text-transform: uppercase; }
 .feature-event-body { padding: clamp(24px, 3.4vw, 44px); display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
 .feature-event-body .event-meta { width: 100%; }
@@ -2763,15 +2763,18 @@ button { color: inherit; }
 
 /* Secondary CTA on deep graphite sections stays legible. The page hero is now
    a light ivory section, so it keeps the default graphite-outline secondary. */
+.hero .button-secondary,
 .final-banner .button-secondary,
 .event-hero .button-secondary {
   color: var(--ivory);
   border-color: rgba(255, 255, 255, 0.38);
 }
+.hero .button-secondary::after,
 .final-banner .button-secondary::after,
 .event-hero .button-secondary::after {
   background: var(--orange);
 }
+.hero .button-secondary:hover,
 .final-banner .button-secondary:hover,
 .event-hero .button-secondary:hover {
   color: var(--graphite);
@@ -3282,8 +3285,8 @@ button { color: inherit; }
 .members-team-role { color: #8f5a08; font: 8px var(--mono); letter-spacing: .07em; text-transform: uppercase; }
 .members-team-info h4 { margin: 0; font: 500 18px var(--display); letter-spacing: -.03em; }
 .members-team-info p { margin: 2px 0 0; color: #64748b; font-size: 11px; line-height: 1.65; }
-.members-team-card.is-placeholder .members-team-info h4 { color: #94a3b8; }
-.members-team-card.is-placeholder .members-team-role { color: #94a3b8; }
+.members-team-card.is-placeholder .members-team-info h4 { color: #64748b; }
+.members-team-card.is-placeholder .members-team-role { color: #64748b; }
 
 @media (max-width: 680px) {
   .team-members-grid { gap: 8px; }
@@ -3525,4 +3528,123 @@ button { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .section-marquee::before,
   .section-marquee::after { animation: none; }
+}
+
+/* ============================================================
+   PHASE 03 — PREMIUM TYPOGRAPHY SCALE
+   Heading: Space Grotesk · Body: Inter · Labels: JetBrains Mono.
+   Hero 64–92 / 34–48 · Section 32–52 / 26–36 · Card titles 18–24 ·
+   Body 15–18 · Supporting labels 12–14.
+   ============================================================ */
+
+/* --- Section headings: 32–52px desktop --- */
+.intro-heading h2,
+.section-heading-row h2,
+.contact-copy h2,
+.leader-head h2,
+.learning-head h2,
+.updates-heading h2,
+.suggestion-copy h2 {
+  font-size: clamp(30px, 3.9vw, 52px);
+  line-height: 1.06;
+  letter-spacing: -0.04em;
+}
+
+/* --- Card titles: 18–24px --- */
+.member-card h3,
+.gallery-card > div h3,
+.suggestion-point-card h3 { font-size: 18px; }
+
+/* --- Body copy: 15–18px --- */
+.hero-intro,
+.intro-copy > p,
+.leader-bio,
+.event-card p,
+.event-description p,
+.event-instructions p,
+.update-copy p,
+.updates-empty p,
+.learning-card p,
+.learning-head-note p,
+.contact-copy > p:not(.eyebrow),
+.suggestion-copy > p,
+.suggestion-points li,
+.suggestion-point-card p,
+.suggestion-success > p,
+.member-profile-body p,
+.value-card p,
+.members-foot p,
+.members-teams-note,
+.members-team-head p,
+.members-team-info p,
+.team-member-info p,
+.update-card-body p,
+.feature-event-body > p,
+.dialog-event-info > p,
+.dialog-agenda p,
+.dialog-speakers p,
+.empty-copy p,
+.gallery-empty p,
+.registration-closed p,
+.registration-success > p,
+.page-state p,
+.notfound p,
+.error-fallback p,
+.auth-panel-intro > p,
+.auth-benefits li {
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+/* --- Secondary / meta copy: 13px --- */
+.leader-caption,
+.leader-study,
+.event-venue,
+.event-agenda p,
+.event-speaker p,
+.dialog-facts span,
+.contact-place small,
+.contact-email,
+.member-card p,
+.member-dialog-bio,
+.member-dialog-meta,
+.learning-disclaimer { font-size: 13px; line-height: 1.7; }
+
+/* --- Supporting labels: 12–14px --- */
+.eyebrow,
+.section-index,
+.stat-item > span,
+.focus-label small,
+.contact-form label,
+.registration-form > label:not(.consent-label),
+.registration-field-pair label,
+.auth-form > label:not(.consent-label),
+.suggestion-field > label,
+.admin-login-card > label,
+.consent-label,
+.privacy-note,
+.team-member-role,
+.member-card > div:last-child > span { font-size: 12px; }
+
+/* --- Buttons: strong, readable typography --- */
+.button { font-size: 12px; }
+
+/* --- Footer typography --- */
+.footer-about,
+.footer-column a,
+.footer-place { font-size: 13px; line-height: 1.7; }
+.footer-column > span:first-child { font-size: 11px; }
+.footer-bottom { font-size: 11px; }
+
+/* --- Mobile: 26–36px section headings, 34–48px hero --- */
+@media (max-width: 680px) {
+  .hero h1 { font-size: clamp(34px, 10vw, 48px); }
+  .intro-heading h2,
+  .section-heading-row h2,
+  .contact-copy h2,
+  .leader-head h2,
+  .learning-head h2,
+  .updates-heading h2,
+  .suggestion-copy h2 { font-size: clamp(26px, 7.4vw, 36px); }
+  .button { font-size: 12px; }
 }
